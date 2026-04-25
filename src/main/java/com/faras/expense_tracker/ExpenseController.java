@@ -16,7 +16,7 @@ public class ExpenseController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Expense addExpense(@RequestBody Expense expense) {
-        return expenseService.add(expense.getAmount(), expense.getCategory(), expense.getNote());
+        return expenseService.add(expense.getAmount(), expense.getCategory(), expense.getNote(), expense.getDate());
     }
 
     @GetMapping
@@ -32,6 +32,6 @@ public class ExpenseController {
 
     @PutMapping("/{id}")
     public Expense updateExpense(@PathVariable Long id, @RequestBody Expense expense) {
-        return expenseService.update(id, expense.getAmount(), expense.getCategory(), expense.getNote());
+        return expenseService.update(id, expense.getAmount(), expense.getCategory(), expense.getNote(), expense.getDate());
     }
 }

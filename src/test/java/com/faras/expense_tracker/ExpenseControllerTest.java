@@ -7,6 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import java.time.LocalDate;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -23,7 +24,7 @@ class ExpenseControllerTest {
 
     @Test
     void addExpense_returnsCreatedExpenseWithId() throws Exception {
-        Expense request = new Expense(null, 50000.0, "food", "lunch");
+        Expense request = new Expense(null, 50000.0, "food", "lunch", LocalDate.of(2026, 4, 25));
 
         mockMvc.perform(post("/expenses")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -32,7 +33,19 @@ class ExpenseControllerTest {
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.amount").value(50000.0))
                 .andExpect(jsonPath("$.category").value("food"))
-                .andExpect(jsonPath("$.note").value("lunch"));
+                .andExpect(jsonPath("$.note").value("lunch"))
+                .andExpect(jsonPath("$.date").value("2026-04-25"));
+    }
+
+    @Test
+    void addExpense_withoutDate_defaultsToToday() throws Exception {
+        Expense request = new Expense(null, 15000.0, "Food", "Coffee", null);
+
+        mockMvc.perform(post("/expenses")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.date").value(LocalDate.now().toString()));
     }
 
     @Test
@@ -44,7 +57,7 @@ class ExpenseControllerTest {
 
     @Test
     void deleteExpense_returnsNoContent() throws Exception {
-        Expense created = new Expense(null, 20000.0, "Transport", "Grab");
+        Expense created = new Expense(null, 20000.0, "Transport", "Grab", LocalDate.now());
         String body = mockMvc.perform(post("/expenses")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(created)))
@@ -66,14 +79,14 @@ class ExpenseControllerTest {
 
     @Test
     void updateExpense_returnsUpdatedExpense() throws Exception {
-        Expense created = new Expense(null, 10000.0, "Food", "Snack");
+        Expense created = new Expense(null, 10000.0, "Food", "Snack", LocalDate.now());
         String body = mockMvc.perform(post("/expenses")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(created)))
                 .andReturn().getResponse().getContentAsString();
         Long id = objectMapper.readTree(body).get("id").asLong();
 
-        Expense update = new Expense(null, 25000.0, "Bills", "Internet");
+        Expense update = new Expense(null, 25000.0, "Bills", "Internet", LocalDate.of(2026, 4, 1));
         mockMvc.perform(put("/expenses/" + id)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(update)))
@@ -81,6 +94,7 @@ class ExpenseControllerTest {
                 .andExpect(jsonPath("$.id").value(id))
                 .andExpect(jsonPath("$.amount").value(25000.0))
                 .andExpect(jsonPath("$.category").value("Bills"))
-                .andExpect(jsonPath("$.note").value("Internet"));
+                .andExpect(jsonPath("$.note").value("Internet"))
+                .andExpect(jsonPath("$.date").value("2026-04-01"));
     }
 }
