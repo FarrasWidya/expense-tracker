@@ -1,6 +1,8 @@
 package com.faras.expense_tracker;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @Service
@@ -19,5 +21,21 @@ public class ExpenseService {
 
     public List<Expense> getAll() {
         return repository.findAll();
+    }
+
+    public void delete(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        repository.deleteById(id);
+    }
+
+    public Expense update(Long id, Double amount, String category, String note) {
+        Expense expense = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        expense.setAmount(amount);
+        expense.setCategory(category);
+        expense.setNote(note);
+        return repository.save(expense);
     }
 }

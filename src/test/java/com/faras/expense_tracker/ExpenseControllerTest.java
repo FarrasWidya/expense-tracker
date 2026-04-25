@@ -41,4 +41,46 @@ class ExpenseControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
+
+    @Test
+    void deleteExpense_returnsNoContent() throws Exception {
+        Expense created = new Expense(null, 20000.0, "Transport", "Grab");
+        String body = mockMvc.perform(post("/expenses")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(created)))
+                .andReturn().getResponse().getContentAsString();
+        Long id = objectMapper.readTree(body).get("id").asLong();
+
+        mockMvc.perform(delete("/expenses/" + id))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/expenses"))
+                .andExpect(jsonPath("$[?(@.id == " + id + ")]").isEmpty());
+    }
+
+    @Test
+    void deleteExpense_notFound_returns404() throws Exception {
+        mockMvc.perform(delete("/expenses/99999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateExpense_returnsUpdatedExpense() throws Exception {
+        Expense created = new Expense(null, 10000.0, "Food", "Snack");
+        String body = mockMvc.perform(post("/expenses")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(created)))
+                .andReturn().getResponse().getContentAsString();
+        Long id = objectMapper.readTree(body).get("id").asLong();
+
+        Expense update = new Expense(null, 25000.0, "Bills", "Internet");
+        mockMvc.perform(put("/expenses/" + id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(update)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.amount").value(25000.0))
+                .andExpect(jsonPath("$.category").value("Bills"))
+                .andExpect(jsonPath("$.note").value("Internet"));
+    }
 }
