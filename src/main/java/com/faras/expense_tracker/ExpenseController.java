@@ -23,4 +23,15 @@ public class ExpenseController {
     public List<Expense> getAllExpenses() {
         return expenseService.getAll();
     }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteExpense(@PathVariable Long id) {
+        expenseService.delete(id);
+    }
+
+    @PutMapping("/{id}")
+    public Expense updateExpense(@PathVariable Long id, @RequestBody Expense expense) {
+        return expenseService.update(id, expense.getAmount(), expense.getCategory(), expense.getNote());
+    }
 }

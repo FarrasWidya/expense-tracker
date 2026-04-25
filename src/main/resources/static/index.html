@@ -168,6 +168,23 @@
       text-align: center;
       margin-top: 40px;
     }
+
+    .delete-btn {
+      background: none;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #666;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 4px 8px;
+      margin-left: 12px;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:hover {
+      border-color: #e94560;
+      color: #e94560;
+    }
   </style>
 </head>
 <body>
@@ -230,6 +247,12 @@
       Other:         { text: '#aaa',    bg: '#222'    },
     };
 
+    async function deleteExpense(id) {
+      const res = await fetch(`/expenses/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete failed: ' + res.status);
+      await loadExpenses();
+    }
+
     function renderExpenses(expenses) {
       const list = document.getElementById('expense-list');
       const totalEl = document.getElementById('total-value');
@@ -254,10 +277,17 @@
                 ${escapeHtml(e.category)}
               </span>
             </div>
-            <div class="expense-amount">${formatRp(e.amount)}</div>
+            <div style="display:flex;align-items:center">
+              <div class="expense-amount">${formatRp(e.amount)}</div>
+              <button class="delete-btn" data-id="${e.id}">×</button>
+            </div>
           </div>
         `;
       }).join('');
+
+      list.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => deleteExpense(Number(btn.dataset.id)));
+      });
     }
 
     async function loadExpenses() {
