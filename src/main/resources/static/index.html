@@ -103,6 +103,7 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      touch-action: manipulation;
     }
 
     #submit-btn:hover { background: #c73652; }
@@ -130,6 +131,52 @@
       color: #aaa;
       margin-bottom: 18px;
     }
+
+    /* SUMMARY BAR */
+    #summary-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #16213e;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+
+    .summary-month { flex: 1; }
+
+    .summary-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+
+    .summary-amount {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .summary-divider {
+      width: 1px;
+      height: 36px;
+      background: #1a3a5c;
+      flex-shrink: 0;
+    }
+
+    #summary-delta {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    #summary-delta.up   { color: #e94560; background: rgba(233,69,96,0.15); }
+    #summary-delta.down { color: #55efc4; background: rgba(85,239,196,0.15); }
+    #summary-delta.same { color: #666; }
 
     .expense-row {
       background: #16213e;
@@ -212,6 +259,7 @@
       font-size: 12px;
       padding: 7px 10px;
       white-space: nowrap;
+      touch-action: manipulation;
     }
 
     #filter-clear:hover {
@@ -229,6 +277,7 @@
       padding: 4px 8px;
       margin-left: 8px;
       flex-shrink: 0;
+      touch-action: manipulation;
     }
 
     .delete-btn:hover {
@@ -298,6 +347,7 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      touch-action: manipulation;
     }
 
     #modal-save-btn:hover { background: #c73652; }
@@ -368,6 +418,213 @@
       font-size: 11px;
       margin-left: 4px;
     }
+
+    /* FAB — hidden on desktop, shown on mobile */
+    #fab {
+      display: none;
+    }
+
+    /* QUICK-ADD SHEET & OVERLAY — hidden until open */
+    #sheet-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 195;
+    }
+
+    #sheet-overlay.open { display: block; }
+
+    #quick-add-sheet {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #16213e;
+      border-top: 1px solid #1a3a5c;
+      border-radius: 16px 16px 0 0;
+      padding: 20px 20px 36px;
+      z-index: 200;
+      transform: translateY(100%);
+      transition: transform 0.25s ease;
+    }
+
+    #quick-add-sheet.open { transform: translateY(0); }
+
+    #sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    #sheet-title {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #aaa;
+    }
+
+    #sheet-close {
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 0;
+      touch-action: manipulation;
+    }
+
+    #sheet-close:hover { color: #fff; }
+
+    #quick-add-sheet input[type="number"],
+    #quick-add-sheet input[type="text"],
+    #quick-add-sheet input[type="date"],
+    #quick-add-sheet select {
+      width: 100%;
+      background: #0f1a2e;
+      border: 1px solid #1a3a5c;
+      border-radius: 6px;
+      padding: 14px 12px;
+      color: #fff;
+      font-size: 16px; /* prevents iOS auto-zoom */
+      font-family: inherit;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    #quick-add-sheet input:focus,
+    #quick-add-sheet select:focus {
+      border-color: #e94560;
+    }
+
+    #quick-add-sheet select option { background: #0f1a2e; }
+
+    #sheet-submit {
+      width: 100%;
+      background: #e94560;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+      touch-action: manipulation;
+    }
+
+    #sheet-submit:hover { background: #c73652; }
+    #sheet-submit:disabled { background: #555; cursor: not-allowed; }
+
+    #sheet-more-toggle {
+      text-align: center;
+      margin-top: 4px;
+      margin-bottom: 4px;
+      font-size: 12px;
+      color: #555;
+      cursor: pointer;
+      text-decoration: underline;
+      touch-action: manipulation;
+    }
+
+    #sheet-more-toggle:hover { color: #aaa; }
+
+    #sheet-more-fields { display: none; }
+    #sheet-more-fields.show { display: block; }
+
+    #sheet-error {
+      color: #e94560;
+      font-size: 12px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    /* ===================== MOBILE ===================== */
+    @media (max-width: 640px) {
+      header { padding: 12px 16px; }
+
+      main { flex-direction: column; }
+
+      #form-panel { display: none; }
+
+      #list-panel {
+        padding: 16px;
+        padding-bottom: 88px; /* space above FAB */
+      }
+
+      /* inputs font-size 16px to prevent iOS zoom */
+      input, select, textarea {
+        font-size: 16px;
+      }
+
+      /* filter bar stacks vertically */
+      #filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      #filter-bar select,
+      #filter-bar input[type="date"],
+      #filter-clear {
+        width: 100%;
+        font-size: 14px;
+        padding: 10px 12px;
+      }
+
+      /* chart stacks */
+      #chart-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      #chart-canvas-wrap {
+        width: 140px;
+        height: 140px;
+        margin: 0 auto;
+      }
+
+      /* summary amounts smaller */
+      .summary-amount { font-size: 13px; }
+
+      /* modal fits screen */
+      #modal {
+        width: calc(100vw - 40px);
+        max-width: 400px;
+      }
+
+      /* action buttons larger touch targets */
+      .delete-btn, .edit-btn {
+        padding: 8px 12px;
+        font-size: 15px;
+      }
+
+      /* FAB */
+      #fab {
+        display: flex;
+        position: fixed;
+        bottom: 24px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        background: #e94560;
+        border: none;
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        line-height: 1;
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 4px 20px rgba(233,69,96,0.5);
+        z-index: 90;
+        touch-action: manipulation;
+      }
+
+      #fab:active { background: #c73652; }
+    }
   </style>
 </head>
 <body>
@@ -378,6 +635,7 @@
   </header>
 
   <main>
+    <!-- LEFT PANEL (desktop) -->
     <section id="form-panel">
       <h2>Add Expense</h2>
       <form id="expense-form">
@@ -405,8 +663,24 @@
       </form>
     </section>
 
+    <!-- RIGHT PANEL -->
     <section id="list-panel">
       <h2>Expenses</h2>
+
+      <!-- Monthly summary bar -->
+      <div id="summary-bar">
+        <div class="summary-month">
+          <div class="summary-label">This month</div>
+          <div class="summary-amount" id="summary-this">—</div>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-month">
+          <div class="summary-label">Last month</div>
+          <div class="summary-amount" id="summary-last">—</div>
+        </div>
+        <div id="summary-delta" class="same"></div>
+      </div>
+
       <div id="filter-bar">
         <select id="filter-category">
           <option value="">All Categories</option>
@@ -419,8 +693,9 @@
         </select>
         <input id="filter-from" type="date" title="From">
         <input id="filter-to" type="date" title="To">
-        <button id="filter-clear">Clear</button>
+        <button id="filter-clear">This month</button>
       </div>
+
       <div id="chart-section" class="hidden">
         <div id="chart-canvas-wrap">
           <canvas id="spending-chart"></canvas>
@@ -431,6 +706,41 @@
       <div id="expense-list"></div>
     </section>
   </main>
+
+  <!-- FAB (mobile only) -->
+  <button id="fab" aria-label="Add expense">+</button>
+
+  <!-- Sheet backdrop -->
+  <div id="sheet-overlay"></div>
+
+  <!-- Quick-add bottom sheet (mobile) -->
+  <div id="quick-add-sheet" role="dialog" aria-modal="true" aria-label="Quick add expense">
+    <div id="sheet-header">
+      <span id="sheet-title">Quick Add</span>
+      <button id="sheet-close" aria-label="Close">×</button>
+    </div>
+
+    <input id="sheet-amount" type="number" inputmode="numeric" min="0" step="any" placeholder="Amount (Rp)" required>
+
+    <select id="sheet-category">
+      <option value="Food">Food</option>
+      <option value="Transport">Transport</option>
+      <option value="Bills">Bills</option>
+      <option value="Entertainment">Entertainment</option>
+      <option value="Health">Health</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <div id="sheet-more-toggle">+ Note &amp; date</div>
+
+    <div id="sheet-more-fields">
+      <input id="sheet-note" type="text" placeholder="Note (optional)">
+      <input id="sheet-date" type="date">
+    </div>
+
+    <button id="sheet-submit">Add Expense</button>
+    <div id="sheet-error"></div>
+  </div>
 
   <!-- EDIT MODAL -->
   <div id="modal-overlay">
@@ -465,6 +775,20 @@
   <script>
     let editingId = null;
     let spendingChart = null;
+
+    function today() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    function thisMonthRange() {
+      const now = new Date();
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const last  = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return {
+        from: first.toISOString().split('T')[0],
+        to:   last.toISOString().split('T')[0],
+      };
+    }
 
     function renderChart(expenses) {
       const section = document.getElementById('chart-section');
@@ -571,7 +895,7 @@
     async function deleteExpense(id) {
       const res = await fetch(`/expenses/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Delete failed: ' + res.status);
-      await loadExpenses();
+      await Promise.all([loadExpenses(), loadMonthlySummary()]);
     }
 
     function renderExpenses(expenses) {
@@ -591,7 +915,9 @@
 
       list.innerHTML = expenses.map(e => {
         const colors = CATEGORY_COLORS[e.category] || CATEGORY_COLORS.Other;
-        const dateStr = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+        const dateStr = e.date
+          ? new Date(e.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+          : '—';
         return `
           <div class="expense-row">
             <div>
@@ -622,12 +948,12 @@
 
     async function loadExpenses() {
       const params = new URLSearchParams();
-      const cat = document.getElementById('filter-category').value;
+      const cat  = document.getElementById('filter-category').value;
       const from = document.getElementById('filter-from').value;
-      const to = document.getElementById('filter-to').value;
-      if (cat) params.set('category', cat);
+      const to   = document.getElementById('filter-to').value;
+      if (cat)  params.set('category', cat);
       if (from) params.set('startDate', from);
-      if (to) params.set('endDate', to);
+      if (to)   params.set('endDate', to);
 
       const url = params.toString() ? `/expenses?${params}` : '/expenses';
       try {
@@ -641,18 +967,61 @@
       }
     }
 
+    async function loadMonthlySummary() {
+      const now = new Date();
+      const thisFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+      const thisTo   = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
+      const lastFrom = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+      const lastTo   = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+
+      try {
+        const [thisRes, lastRes] = await Promise.all([
+          fetch(`/expenses?startDate=${thisFrom}&endDate=${thisTo}`),
+          fetch(`/expenses?startDate=${lastFrom}&endDate=${lastTo}`),
+        ]);
+        const thisData = await thisRes.json();
+        const lastData = await lastRes.json();
+        const thisTotal = thisData.reduce((s, e) => s + e.amount, 0);
+        const lastTotal = lastData.reduce((s, e) => s + e.amount, 0);
+
+        document.getElementById('summary-this').textContent = formatRp(thisTotal);
+        document.getElementById('summary-last').textContent = formatRp(lastTotal);
+
+        const delta = document.getElementById('summary-delta');
+        if (lastTotal === 0) {
+          delta.textContent = '';
+          delta.className = 'same';
+        } else {
+          const pct = Math.round(((thisTotal - lastTotal) / lastTotal) * 100);
+          if (pct > 0) {
+            delta.textContent = `+${pct}%`;
+            delta.className = 'up';
+          } else if (pct < 0) {
+            delta.textContent = `${pct}%`;
+            delta.className = 'down';
+          } else {
+            delta.textContent = '±0%';
+            delta.className = 'same';
+          }
+        }
+      } catch (_) {
+        // silent — bar stays at defaults
+      }
+    }
+
+    /* ---- desktop form submit ---- */
     document.getElementById('expense-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const btn = document.getElementById('submit-btn');
+      const btn   = document.getElementById('submit-btn');
       const errEl = document.getElementById('form-error');
       errEl.style.display = 'none';
       btn.disabled = true;
 
       const body = {
-        amount: parseFloat(document.getElementById('amount').value),
+        amount:   parseFloat(document.getElementById('amount').value),
         category: document.getElementById('category').value,
-        note: document.getElementById('note').value.trim(),
-        date: document.getElementById('date').value,
+        note:     document.getElementById('note').value.trim(),
+        date:     document.getElementById('date').value,
       };
 
       try {
@@ -662,11 +1031,10 @@
           body: JSON.stringify(body),
         });
         if (!res.ok) throw new Error('Server error: ' + res.status);
-
         document.getElementById('amount').value = '';
         document.getElementById('note').value = '';
-        document.getElementById('date').value = new Date().toISOString().split('T')[0];
-        await loadExpenses();
+        document.getElementById('date').value = today();
+        await Promise.all([loadExpenses(), loadMonthlySummary()]);
       } catch (err) {
         errEl.textContent = 'Failed to add expense. Is the server running?';
         errEl.style.display = 'block';
@@ -675,18 +1043,19 @@
       }
     });
 
+    /* ---- edit modal save ---- */
     document.getElementById('modal-save-btn').addEventListener('click', async () => {
       if (!editingId) return;
-      const btn = document.getElementById('modal-save-btn');
+      const btn   = document.getElementById('modal-save-btn');
       const errEl = document.getElementById('modal-error');
       errEl.style.display = 'none';
       btn.disabled = true;
 
       const body = {
-        amount: parseFloat(document.getElementById('modal-amount').value),
+        amount:   parseFloat(document.getElementById('modal-amount').value),
         category: document.getElementById('modal-category').value,
-        note: document.getElementById('modal-note').value.trim(),
-        date: document.getElementById('modal-date').value,
+        note:     document.getElementById('modal-note').value.trim(),
+        date:     document.getElementById('modal-date').value,
       };
 
       try {
@@ -697,7 +1066,7 @@
         });
         if (!res.ok) throw new Error('Server error: ' + res.status);
         closeEditModal();
-        await loadExpenses();
+        await Promise.all([loadExpenses(), loadMonthlySummary()]);
       } catch (err) {
         errEl.textContent = 'Failed to save changes.';
         errEl.style.display = 'block';
@@ -713,22 +1082,102 @@
     });
 
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeEditModal();
+      if (e.key === 'Escape') {
+        closeEditModal();
+        closeSheet();
+      }
     });
 
-    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    /* ---- FAB + quick-add sheet ---- */
+    function openSheet() {
+      document.getElementById('sheet-amount').value = '';
+      document.getElementById('sheet-note').value = '';
+      document.getElementById('sheet-date').value = today();
+      document.getElementById('sheet-error').style.display = 'none';
+      document.getElementById('sheet-more-fields').classList.remove('show');
+      document.getElementById('sheet-more-toggle').textContent = '+ Note & date';
+      document.getElementById('quick-add-sheet').classList.add('open');
+      document.getElementById('sheet-overlay').classList.add('open');
+      setTimeout(() => document.getElementById('sheet-amount').focus(), 50);
+    }
 
+    function closeSheet() {
+      document.getElementById('quick-add-sheet').classList.remove('open');
+      document.getElementById('sheet-overlay').classList.remove('open');
+    }
+
+    document.getElementById('fab').addEventListener('click', openSheet);
+    document.getElementById('sheet-close').addEventListener('click', closeSheet);
+    document.getElementById('sheet-overlay').addEventListener('click', closeSheet);
+
+    document.getElementById('sheet-more-toggle').addEventListener('click', () => {
+      const fields  = document.getElementById('sheet-more-fields');
+      const toggle  = document.getElementById('sheet-more-toggle');
+      const showing = fields.classList.toggle('show');
+      toggle.textContent = showing ? '– Hide options' : '+ Note & date';
+    });
+
+    document.getElementById('sheet-submit').addEventListener('click', async () => {
+      const amountEl = document.getElementById('sheet-amount');
+      const btn      = document.getElementById('sheet-submit');
+      const errEl    = document.getElementById('sheet-error');
+      errEl.style.display = 'none';
+
+      const amount = parseFloat(amountEl.value);
+      if (!amount || amount <= 0) {
+        errEl.textContent = 'Please enter a valid amount.';
+        errEl.style.display = 'block';
+        amountEl.focus();
+        return;
+      }
+
+      btn.disabled = true;
+      const body = {
+        amount,
+        category: document.getElementById('sheet-category').value,
+        note:     document.getElementById('sheet-note').value.trim(),
+        date:     document.getElementById('sheet-date').value || today(),
+      };
+
+      try {
+        const res = await fetch('/expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error('Server error');
+        closeSheet();
+        await Promise.all([loadExpenses(), loadMonthlySummary()]);
+      } catch (err) {
+        errEl.textContent = 'Failed to add expense.';
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    /* ---- filter ---- */
     document.getElementById('filter-category').addEventListener('change', loadExpenses);
     document.getElementById('filter-from').addEventListener('change', loadExpenses);
     document.getElementById('filter-to').addEventListener('change', loadExpenses);
+
     document.getElementById('filter-clear').addEventListener('click', () => {
       document.getElementById('filter-category').value = '';
-      document.getElementById('filter-from').value = '';
-      document.getElementById('filter-to').value = '';
+      const { from, to } = thisMonthRange();
+      document.getElementById('filter-from').value = from;
+      document.getElementById('filter-to').value = to;
       loadExpenses();
     });
 
+    /* ---- init ---- */
+    document.getElementById('date').value = today();
+
+    const { from: initFrom, to: initTo } = thisMonthRange();
+    document.getElementById('filter-from').value = initFrom;
+    document.getElementById('filter-to').value   = initTo;
+
     loadExpenses();
+    loadMonthlySummary();
   </script>
 
 </body>
