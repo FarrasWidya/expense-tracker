@@ -9,6 +9,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import java.time.LocalDate;
 
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -96,5 +98,35 @@ class ExpenseControllerTest {
                 .andExpect(jsonPath("$.category").value("Bills"))
                 .andExpect(jsonPath("$.note").value("Internet"))
                 .andExpect(jsonPath("$.date").value("2026-04-01"));
+    }
+
+    @Test
+    void filterByCategory_returnsOnlyMatchingExpenses() throws Exception {
+        Expense e = new Expense(null, 5000.0, "Health", "Vitamin", LocalDate.now());
+        mockMvc.perform(post("/expenses")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(e)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/expenses").param("category", "Health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[*].category", everyItem(is("Health"))));
+    }
+
+    @Test
+    void filterByDateRange_returnsOnlyExpensesWithinRange() throws Exception {
+        Expense e = new Expense(null, 30000.0, "Entertainment", "Concert", LocalDate.of(2025, 6, 15));
+        mockMvc.perform(post("/expenses")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(e)))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/expenses")
+                .param("startDate", "2025-06-01")
+                .param("endDate", "2025-06-30"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[*].date", everyItem(is("2025-06-15"))));
     }
 }
