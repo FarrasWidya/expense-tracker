@@ -209,6 +209,18 @@
   </main>
 
   <script>
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function formatRp(amount) {
+      return 'Rp ' + Number(amount).toLocaleString('id-ID');
+    }
+
     const CATEGORY_COLORS = {
       Food:          { text: '#e94560', bg: '#2a1a2e' },
       Transport:     { text: '#4ecdc4', bg: '#1a2a2e' },
@@ -217,10 +229,6 @@
       Health:        { text: '#55efc4', bg: '#1a2e2a' },
       Other:         { text: '#aaa',    bg: '#222'    },
     };
-
-    function formatRp(amount) {
-      return 'Rp ' + Number(amount).toLocaleString('id-ID');
-    }
 
     function renderExpenses(expenses) {
       const list = document.getElementById('expense-list');
@@ -252,18 +260,16 @@
       }).join('');
     }
 
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-    }
-
     async function loadExpenses() {
-      const res = await fetch('/expenses');
-      const data = await res.json();
-      renderExpenses(data);
+      try {
+        const res = await fetch('/expenses');
+        if (!res.ok) throw new Error('Server error: ' + res.status);
+        const data = await res.json();
+        renderExpenses(data);
+      } catch (err) {
+        document.getElementById('expense-list').innerHTML =
+          '<p id="empty-state">Could not load expenses. Is the server running?</p>';
+      }
     }
 
     document.getElementById('expense-form').addEventListener('submit', async (e) => {
