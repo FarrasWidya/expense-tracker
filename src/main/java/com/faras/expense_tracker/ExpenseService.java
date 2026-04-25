@@ -21,7 +21,12 @@ public class ExpenseService {
         return repository.save(expense);
     }
 
-    public List<Expense> getAll() {
+    public List<Expense> getAll(String category, LocalDate startDate, LocalDate endDate) {
+        boolean hasCategory = category != null && !category.isBlank();
+        boolean hasDateRange = startDate != null && endDate != null;
+        if (hasCategory && hasDateRange) return repository.findByCategoryAndDateBetween(category, startDate, endDate);
+        if (hasCategory) return repository.findByCategory(category);
+        if (hasDateRange) return repository.findByDateBetween(startDate, endDate);
         return repository.findAll();
     }
 

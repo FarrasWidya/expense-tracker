@@ -175,6 +175,49 @@
       margin-top: 3px;
     }
 
+    /* FILTER BAR */
+    #filter-bar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    #filter-bar select,
+    #filter-bar input[type="date"] {
+      background: #0f1a2e;
+      border: 1px solid #1a3a5c;
+      border-radius: 4px;
+      padding: 7px 10px;
+      color: #fff;
+      font-size: 12px;
+      font-family: inherit;
+      margin-bottom: 0;
+      width: auto;
+    }
+
+    #filter-bar select:focus,
+    #filter-bar input[type="date"]:focus {
+      border-color: #e94560;
+    }
+
+    #filter-clear {
+      background: none;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #666;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 7px 10px;
+      white-space: nowrap;
+    }
+
+    #filter-clear:hover {
+      border-color: #aaa;
+      color: #aaa;
+    }
+
     .delete-btn, .edit-btn {
       background: none;
       border: 1px solid #333;
@@ -304,6 +347,20 @@
 
     <section id="list-panel">
       <h2>Expenses</h2>
+      <div id="filter-bar">
+        <select id="filter-category">
+          <option value="">All Categories</option>
+          <option value="Food">Food</option>
+          <option value="Transport">Transport</option>
+          <option value="Bills">Bills</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Health">Health</option>
+          <option value="Other">Other</option>
+        </select>
+        <input id="filter-from" type="date" title="From">
+        <input id="filter-to" type="date" title="To">
+        <button id="filter-clear">Clear</button>
+      </div>
       <div id="expense-list"></div>
     </section>
   </main>
@@ -429,8 +486,17 @@
     }
 
     async function loadExpenses() {
+      const params = new URLSearchParams();
+      const cat = document.getElementById('filter-category').value;
+      const from = document.getElementById('filter-from').value;
+      const to = document.getElementById('filter-to').value;
+      if (cat) params.set('category', cat);
+      if (from) params.set('startDate', from);
+      if (to) params.set('endDate', to);
+
+      const url = params.toString() ? `/expenses?${params}` : '/expenses';
       try {
-        const res = await fetch('/expenses');
+        const res = await fetch(url);
         if (!res.ok) throw new Error('Server error: ' + res.status);
         const data = await res.json();
         renderExpenses(data);
@@ -516,6 +582,17 @@
     });
 
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
+
+    document.getElementById('filter-category').addEventListener('change', loadExpenses);
+    document.getElementById('filter-from').addEventListener('change', loadExpenses);
+    document.getElementById('filter-to').addEventListener('change', loadExpenses);
+    document.getElementById('filter-clear').addEventListener('click', () => {
+      document.getElementById('filter-category').value = '';
+      document.getElementById('filter-from').value = '';
+      document.getElementById('filter-to').value = '';
+      loadExpenses();
+    });
+
     loadExpenses();
   </script>
 
