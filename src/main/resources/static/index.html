@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Expense Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -308,6 +309,65 @@
       margin-top: 8px;
       display: none;
     }
+
+    /* CHART */
+    #chart-section {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    #chart-section.hidden { display: none; }
+
+    #chart-canvas-wrap {
+      width: 160px;
+      height: 160px;
+      flex-shrink: 0;
+    }
+
+    #chart-legend {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .legend-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #ccc;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .legend-amount {
+      color: #fff;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .legend-pct {
+      color: #666;
+      font-size: 11px;
+      margin-left: 4px;
+    }
   </style>
 </head>
 <body>
@@ -361,6 +421,13 @@
         <input id="filter-to" type="date" title="To">
         <button id="filter-clear">Clear</button>
       </div>
+      <div id="chart-section" class="hidden">
+        <div id="chart-canvas-wrap">
+          <canvas id="spending-chart"></canvas>
+        </div>
+        <div id="chart-legend"></div>
+      </div>
+
       <div id="expense-list"></div>
     </section>
   </main>
@@ -397,6 +464,72 @@
 
   <script>
     let editingId = null;
+    let spendingChart = null;
+
+    function renderChart(expenses) {
+      const section = document.getElementById('chart-section');
+      const legend = document.getElementById('chart-legend');
+
+      if (expenses.length === 0) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      const totals = {};
+      for (const e of expenses) {
+        totals[e.category] = (totals[e.category] || 0) + e.amount;
+      }
+
+      const categories = Object.keys(totals).sort((a, b) => totals[b] - totals[a]);
+      const total = Object.values(totals).reduce((s, v) => s + v, 0);
+      const colors = categories.map(c => (CATEGORY_COLORS[c] || CATEGORY_COLORS.Other).text);
+      const amounts = categories.map(c => totals[c]);
+
+      if (spendingChart) {
+        spendingChart.data.labels = categories;
+        spendingChart.data.datasets[0].data = amounts;
+        spendingChart.data.datasets[0].backgroundColor = colors;
+        spendingChart.update();
+      } else {
+        const ctx = document.getElementById('spending-chart').getContext('2d');
+        spendingChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: categories,
+            datasets: [{
+              data: amounts,
+              backgroundColor: colors,
+              borderWidth: 2,
+              borderColor: '#16213e',
+            }],
+          },
+          options: {
+            cutout: '68%',
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            animation: { duration: 400 },
+          },
+        });
+      }
+
+      legend.innerHTML = categories.map(cat => {
+        const color = (CATEGORY_COLORS[cat] || CATEGORY_COLORS.Other).text;
+        const pct = Math.round((totals[cat] / total) * 100);
+        return `
+          <div class="legend-row">
+            <span class="legend-label">
+              <span class="legend-dot" style="background:${color}"></span>
+              ${escapeHtml(cat)}
+            </span>
+            <span>
+              <span class="legend-amount">${formatRp(totals[cat])}</span>
+              <span class="legend-pct">${pct}%</span>
+            </span>
+          </div>
+        `;
+      }).join('');
+
+      section.classList.remove('hidden');
+    }
 
     function escapeHtml(str) {
       return String(str)
@@ -444,6 +577,8 @@
     function renderExpenses(expenses) {
       const list = document.getElementById('expense-list');
       const totalEl = document.getElementById('total-value');
+
+      renderChart(expenses);
 
       if (expenses.length === 0) {
         list.innerHTML = '<p id="empty-state">No expenses yet. Add one!</p>';
