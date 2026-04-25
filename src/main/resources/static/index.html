@@ -169,6 +169,12 @@
       margin-top: 40px;
     }
 
+    .expense-date {
+      font-size: 11px;
+      color: #666;
+      margin-top: 3px;
+    }
+
     .delete-btn {
       background: none;
       border: 1px solid #333;
@@ -213,6 +219,9 @@
 
         <label for="note">Note</label>
         <textarea id="note" placeholder="e.g. Lunch at warung"></textarea>
+
+        <label for="date">Date</label>
+        <input id="date" type="date" required>
 
         <button id="submit-btn" type="submit">+ Add Expense</button>
         <div id="form-error"></div>
@@ -268,6 +277,7 @@
 
       list.innerHTML = expenses.map(e => {
         const colors = CATEGORY_COLORS[e.category] || CATEGORY_COLORS.Other;
+        const dateStr = e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
         return `
           <div class="expense-row">
             <div>
@@ -276,6 +286,7 @@
                 style="color:${colors.text};background:${colors.bg}">
                 ${escapeHtml(e.category)}
               </span>
+              <div class="expense-date">${dateStr}</div>
             </div>
             <div style="display:flex;align-items:center">
               <div class="expense-amount">${formatRp(e.amount)}</div>
@@ -313,6 +324,7 @@
         amount: parseFloat(document.getElementById('amount').value),
         category: document.getElementById('category').value,
         note: document.getElementById('note').value.trim(),
+        date: document.getElementById('date').value,
       };
 
       try {
@@ -325,6 +337,7 @@
 
         document.getElementById('amount').value = '';
         document.getElementById('note').value = '';
+        document.getElementById('date').value = new Date().toISOString().split('T')[0];
         await loadExpenses();
       } catch (err) {
         errEl.textContent = 'Failed to add expense. Is the server running?';
@@ -334,6 +347,7 @@
       }
     });
 
+    document.getElementById('date').value = new Date().toISOString().split('T')[0];
     loadExpenses();
   </script>
 
