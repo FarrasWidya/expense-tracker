@@ -38,11 +38,12 @@ The Indonesian market is underserved — good apps are English-first, USD-focuse
 - Spending chart (doughnut by category)
 - Deployed on Railway (auto-deploy from GitHub)
 
-### Phase 2 — UI Polish (next)
-- Mobile-responsive layout (critical — people log expenses on their phone)
-- Quick-add: just amount + category, 2 taps, date defaults to today
-- Default view: "This month" instead of all-time
-- Monthly summary bar (this month vs last month)
+### Phase 2 — UI Polish ✅ (done — April 2026)
+- Mobile-responsive layout — form panel hidden on mobile, full-width list
+- Quick-add — FAB opens bottom sheet (amount + category only, date defaults today)
+- Default view — "This month" on every load; filter button resets to current month
+- Monthly summary bar — This month vs Last month with +/–% delta
+- Makefile — `make run`, `make test`, `make fmt`, `make stop`, etc.
 
 ### Phase 3 — Auth + Multi-user
 - Email + password login
@@ -64,6 +65,6 @@ The Indonesian market is underserved — good apps are English-first, USD-focuse
 
 ## Current App Weaknesses (honest)
 
-1. **Mobile UX** — two-panel layout breaks on phones; most logging happens on mobile
-2. **High-friction entry** — 4 fields every time (amount + category + note + date)
-3. **No temporal context** — no "this month" default, no month-over-month comparison
+1. **No auth** — single shared data store; anyone with the URL can see everything
+2. **Indonesian categories** — still using generic English labels (Food, Transport…) not IDR-native ones
+3. **No budget targets** — can see spending but can't set limits per category
