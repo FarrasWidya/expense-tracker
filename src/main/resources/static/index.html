@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expense Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #0f3460;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      color: #e94560;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    #total {
+      font-size: 13px;
+      color: #aaa;
+    }
+
+    #total span {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    main {
+      display: flex;
+      flex: 1;
+    }
+
+    /* LEFT PANEL */
+    #form-panel {
+      width: 300px;
+      min-width: 300px;
+      background: #16213e;
+      padding: 24px;
+      border-right: 1px solid #1a3a5c;
+    }
+
+    #form-panel h2 {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 11px;
+      color: #ccc;
+      margin-bottom: 4px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: #0f1a2e;
+      border: 1px solid #1a3a5c;
+      border-radius: 4px;
+      padding: 9px 10px;
+      color: #fff;
+      font-size: 13px;
+      font-family: inherit;
+      margin-bottom: 14px;
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #e94560;
+    }
+
+    textarea { resize: vertical; min-height: 72px; }
+
+    select option { background: #0f1a2e; }
+
+    #submit-btn {
+      width: 100%;
+      background: #e94560;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 11px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #submit-btn:hover { background: #c73652; }
+    #submit-btn:disabled { background: #555; cursor: not-allowed; }
+
+    #form-error {
+      color: #e94560;
+      font-size: 12px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    /* RIGHT PANEL */
+    #list-panel {
+      flex: 1;
+      background: #1a1a2e;
+      padding: 24px;
+    }
+
+    #list-panel h2 {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #aaa;
+      margin-bottom: 18px;
+    }
+
+    .expense-row {
+      background: #16213e;
+      border-radius: 6px;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .expense-note {
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    .expense-category {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-top: 4px;
+    }
+
+    .expense-amount {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      margin-left: 16px;
+    }
+
+    #empty-state {
+      color: #555;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>EXPENSE TRACKER</h1>
+    <div id="total">Total: <span id="total-value">Rp 0</span></div>
+  </header>
+
+  <main>
+    <section id="form-panel">
+      <h2>Add Expense</h2>
+      <form id="expense-form">
+        <label for="amount">Amount (Rp)</label>
+        <input id="amount" type="number" min="0" step="any" placeholder="50000" required>
+
+        <label for="category">Category</label>
+        <select id="category" required>
+          <option value="Food">Food</option>
+          <option value="Transport">Transport</option>
+          <option value="Bills">Bills</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Health">Health</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <label for="note">Note</label>
+        <textarea id="note" placeholder="e.g. Lunch at warung"></textarea>
+
+        <button id="submit-btn" type="submit">+ Add Expense</button>
+        <div id="form-error"></div>
+      </form>
+    </section>
+
+    <section id="list-panel">
+      <h2>Expenses</h2>
+      <div id="expense-list"></div>
+    </section>
+  </main>
+
+  <script>
+    const CATEGORY_COLORS = {
+      Food:          { text: '#e94560', bg: '#2a1a2e' },
+      Transport:     { text: '#4ecdc4', bg: '#1a2a2e' },
+      Bills:         { text: '#f7b731', bg: '#2a2a1a' },
+      Entertainment: { text: '#a29bfe', bg: '#1e1a2e' },
+      Health:        { text: '#55efc4', bg: '#1a2e2a' },
+      Other:         { text: '#aaa',    bg: '#222'    },
+    };
+
+    function formatRp(amount) {
+      return 'Rp ' + Number(amount).toLocaleString('id-ID');
+    }
+
+    function renderExpenses(expenses) {
+      const list = document.getElementById('expense-list');
+      const totalEl = document.getElementById('total-value');
+
+      if (expenses.length === 0) {
+        list.innerHTML = '<p id="empty-state">No expenses yet. Add one!</p>';
+        totalEl.textContent = 'Rp 0';
+        return;
+      }
+
+      const total = expenses.reduce((sum, e) => sum + e.amount, 0);
+      totalEl.textContent = formatRp(total);
+
+      list.innerHTML = expenses.map(e => {
+        const colors = CATEGORY_COLORS[e.category] || CATEGORY_COLORS.Other;
+        return `
+          <div class="expense-row">
+            <div>
+              <div class="expense-note">${escapeHtml(e.note || '—')}</div>
+              <span class="expense-category"
+                style="color:${colors.text};background:${colors.bg}">
+                ${escapeHtml(e.category)}
+              </span>
+            </div>
+            <div class="expense-amount">${formatRp(e.amount)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    async function loadExpenses() {
+      const res = await fetch('/expenses');
+      const data = await res.json();
+      renderExpenses(data);
+    }
+
+    document.getElementById('expense-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errEl = document.getElementById('form-error');
+      errEl.style.display = 'none';
+      btn.disabled = true;
+
+      const body = {
+        amount: parseFloat(document.getElementById('amount').value),
+        category: document.getElementById('category').value,
+        note: document.getElementById('note').value.trim(),
+      };
+
+      try {
+        const res = await fetch('/expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error('Server error: ' + res.status);
+
+        document.getElementById('amount').value = '';
+        document.getElementById('note').value = '';
+        await loadExpenses();
+      } catch (err) {
+        errEl.textContent = 'Failed to add expense. Is the server running?';
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    loadExpenses();
+  </script>
+
+</body>
+</html>
