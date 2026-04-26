@@ -37,3 +37,6 @@ build/
 
 ### Local only ###
 ROADMAP.md
+
+### Worktrees ###
+.worktrees/
