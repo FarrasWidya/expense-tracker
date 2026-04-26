@@ -1,5 +1,6 @@
 package com.faras.expense_tracker;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +11,9 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @Value("${GOOGLE_CLIENT_ID:dummy-local-client-id}")
+    private String googleClientId;
+
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
@@ -18,6 +22,12 @@ public class AuthController {
     public record LoginRequest(String email, String password) {}
     public record TokenResponse(String token) {}
     public record UserResponse(Long id, String email, String provider) {}
+    public record ConfigResponse(boolean googleEnabled) {}
+
+    @GetMapping("/config")
+    public ConfigResponse config() {
+        return new ConfigResponse(!"dummy-local-client-id".equals(googleClientId));
+    }
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)

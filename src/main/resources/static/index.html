@@ -903,7 +903,7 @@
         Continue with Google
       </a>
 
-      <div class="auth-divider">or</div>
+      <div class="auth-divider" id="auth-divider">or</div>
 
       <label>Email</label>
       <input id="auth-email" type="email" placeholder="you@email.com" autocomplete="email">
@@ -969,6 +969,8 @@
         if (!res.ok)            { showAuthError(errEl, 'Something went wrong.'); return; }
         const data = await res.json();
         setToken(data.token);
+        document.getElementById('auth-email').value = '';
+        document.getElementById('auth-password').value = '';
         hideAuthOverlay();
         loadExpenses();
         loadMonthlySummary();
@@ -1374,6 +1376,17 @@
     const { from: initFrom, to: initTo } = thisMonthRange();
     document.getElementById('filter-from').value = initFrom;
     document.getElementById('filter-to').value   = initTo;
+
+    // Hide Google button if backend doesn't have OAuth configured
+    fetch('/auth/config')
+      .then(r => r.json())
+      .then(cfg => {
+        if (!cfg.googleEnabled) {
+          document.getElementById('auth-google-btn').style.display = 'none';
+          document.getElementById('auth-divider').style.display = 'none';
+        }
+      })
+      .catch(() => {});
 
     // Pick up JWT from Google OAuth redirect (?token=...)
     const urlToken = new URLSearchParams(window.location.search).get('token');
