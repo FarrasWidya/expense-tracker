@@ -1,6 +1,7 @@
 package com.faras.expense_tracker;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 
@@ -18,15 +19,10 @@ public class Expense {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate date;
 
-    public Expense() {}
-
-    public Expense(Long id, Double amount, String category, String note, LocalDate date) {
-        this.id = id;
-        this.amount = amount;
-        this.category = category;
-        this.note = note;
-        this.date = date;
-    }
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private User user;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -38,4 +34,6 @@ public class Expense {
     public void setNote(String note) { this.note = note; }
     public LocalDate getDate() { return date; }
     public void setDate(LocalDate date) { this.date = date; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 }
