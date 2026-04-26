@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
@@ -121,5 +122,43 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.avatarInitials").isString())
                 .andExpect(jsonPath("$.hasAvatar").value(false));
+    }
+
+    @Test
+    void patchMe_updatesName() throws Exception {
+        String email = uniqueEmail();
+        String regBody = mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", email, "password", "pass123"))))
+                .andReturn().getResponse().getContentAsString();
+        String token = objectMapper.readTree(regBody).get("token").asText();
+
+        mockMvc.perform(patch("/auth/me")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Faras\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Faras"))
+                .andExpect(jsonPath("$.avatarInitials").value("FA"));
+    }
+
+    @Test
+    void postAvatar_storesBase64AndReturnsHasAvatar() throws Exception {
+        String email = uniqueEmail();
+        String regBody = mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", email, "password", "pass123"))))
+                .andReturn().getResponse().getContentAsString();
+        String token = objectMapper.readTree(regBody).get("token").asText();
+
+        byte[] tinyPng = java.util.Base64.getDecoder().decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg==");
+        MockMultipartFile file = new MockMultipartFile("file", "avatar.png", "image/png", tinyPng);
+
+        mockMvc.perform(multipart("/auth/avatar")
+                        .file(file)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hasAvatar").value(true));
     }
 }

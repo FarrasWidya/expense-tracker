@@ -43,4 +43,23 @@ public class AuthService {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
+
+    @org.springframework.transaction.annotation.Transactional
+    public User updateProfile(Long userId, String name) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        user.setName(name != null ? name.trim() : null);
+        return userRepository.save(user);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public User saveAvatar(Long userId, String base64DataUri) {
+        if (base64DataUri != null && base64DataUri.length() > 700_000) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Avatar must be under 500KB");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        user.setAvatarData(base64DataUri);
+        return userRepository.save(user);
+    }
 }
