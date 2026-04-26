@@ -113,6 +113,127 @@
     .page-header { padding: 16px 20px 8px; font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
     .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--text-2); padding: 12px 20px 4px; }
     .card { margin: 8px 16px; background: var(--raised); border-radius: 12px; overflow: hidden; }
+
+    /* BERANDA */
+    .expense-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+    }
+    .expense-row:last-child { border-bottom: none; }
+    .expense-icon {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--accent-dim); display: flex; align-items: center;
+      justify-content: center; font-size: 20px; flex-shrink: 0;
+    }
+    .expense-row-body { flex: 1; min-width: 0; }
+    .expense-row-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .expense-row-cat { font-size: 12px; color: var(--text-2); }
+    .expense-row-amount { font-family: var(--mono); font-size: 14px; font-weight: 700; white-space: nowrap; }
+    .day-group-header { padding: 8px 16px 4px; font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; }
+    .day-group { background: var(--surface); margin: 0 16px 8px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+
+    /* QUICK-ADD SHEET */
+    #sheet-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.4);
+      z-index: 110; display: none; backdrop-filter: blur(2px);
+    }
+    #quick-add-sheet {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 65dvh;
+      background: var(--surface); border-radius: 20px 20px 0 0;
+      z-index: 111; display: flex; flex-direction: column; gap: 10px;
+      padding: 0 16px calc(var(--sb) + 8px);
+      transform: translateY(100%);
+      transition: transform .3s cubic-bezier(.32,1.1,.72,1);
+    }
+    #quick-add-sheet.open { transform: translateY(0); }
+    #sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 12px auto 0; flex-shrink: 0; }
+    #sheet-amount-display {
+      text-align: center; font-family: var(--mono);
+      font-size: 40px; font-weight: 700; letter-spacing: -1px; padding: 4px 0; flex-shrink: 0;
+    }
+    #sheet-cats { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0; scrollbar-width: none; flex-shrink: 0; }
+    #sheet-cats::-webkit-scrollbar { display: none; }
+    .cat-pill {
+      flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: none;
+      font-size: 13px; color: var(--text);
+    }
+    .cat-pill.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+    #sheet-note input {
+      width: 100%; padding: 10px 14px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--raised);
+      font-size: 14px; font-family: var(--font); color: var(--text); outline: none;
+    }
+    #sheet-note input:focus { border-color: var(--accent); }
+    #sheet-numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; flex: 1; min-height: 0; }
+    .np-key {
+      border-radius: 10px; background: var(--raised); border: none;
+      font-size: 22px; font-family: var(--mono); font-weight: 700; color: var(--text);
+    }
+    .np-key:active { background: var(--border); }
+    #sheet-simpan {
+      width: 100%; padding: 14px; border-radius: 12px; flex-shrink: 0;
+      background: var(--accent); color: #fff; border: none;
+      font-size: 16px; font-weight: 700;
+    }
+    #sheet-simpan:active { opacity: .85; }
+    #sheet-simpan:disabled { opacity: .5; }
+
+    /* CATATAN */
+    .month-chip {
+      flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: none; font-size: 13px; color: var(--text-2);
+    }
+    .month-chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); font-weight: 600; }
+    .swipe-row { position: relative; overflow: hidden; }
+    .swipe-row-content {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      transition: transform .2s ease; will-change: transform;
+    }
+    .swipe-action-bg {
+      position: absolute; top: 0; right: 0; bottom: 0; width: 72px;
+      background: var(--danger); display: flex; align-items: center;
+      justify-content: center; color: #fff; font-size: 13px; font-weight: 600;
+    }
+    #filter-drawer {
+      position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface);
+      border-radius: 20px 20px 0 0; z-index: 111; padding: 20px 16px calc(var(--sb) + 16px);
+      transform: translateY(100%); transition: transform .3s; max-height: 70dvh; overflow-y: auto;
+    }
+    #filter-drawer.open { transform: translateY(0); }
+
+    /* ANGGARAN */
+    .budget-card { padding: 14px 16px; margin-bottom: 10px; }
+    .budget-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .budget-label { font-size: 14px; font-weight: 600; }
+    .budget-amounts { font-size: 12px; color: var(--text-2); font-family: var(--mono); }
+    .budget-track { height: 8px; border-radius: 4px; background: var(--border); overflow: hidden; }
+    .budget-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+    .budget-sisa { font-size: 12px; margin-top: 6px; color: var(--text-2); }
+    #anggaran-modal {
+      position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface);
+      border-radius: 20px 20px 0 0; z-index: 111; padding: 20px 16px calc(var(--sb) + 16px);
+      transform: translateY(100%); transition: transform .3s;
+    }
+    #anggaran-modal.open { transform: translateY(0); }
+    #anggaran-modal label { display: block; font-size: 12px; color: var(--text-2); margin-bottom: 4px; }
+    #anggaran-modal select, #anggaran-modal input {
+      width: 100%; padding: 10px 12px; margin-bottom: 14px; border-radius: 10px;
+      border: 1px solid var(--border); background: var(--raised); color: var(--text);
+      font-size: 14px; font-family: var(--font); outline: none;
+    }
+
+    /* PROFIL */
+    .settings-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px;
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .theme-btn {
+      padding: 6px 12px; border-radius: 8px; font-size: 12px;
+      border: 1.5px solid var(--border); background: none; color: var(--text);
+    }
+    .theme-btn.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -143,10 +264,115 @@
 
   <!-- APP -->
   <div id="app">
-    <section id="screen-beranda" class="screen active"><!-- Task 2 --></section>
-    <section id="screen-catatan" class="screen"><!-- Task 4 --></section>
-    <section id="screen-anggaran" class="screen"><!-- Task 5 --></section>
-    <section id="screen-profil" class="screen"><!-- Task 6 --></section>
+    <section id="screen-beranda" class="screen active">
+      <div class="page-header">Beranda</div>
+      <div class="card" style="padding:20px 20px 16px">
+        <div style="font-size:12px;color:var(--text-2);margin-bottom:4px">Bulan ini</div>
+        <div id="beranda-total" style="font-family:var(--mono);font-size:36px;font-weight:700;letter-spacing:-1px">Rp 0</div>
+        <div id="beranda-compare" style="display:none;margin-top:6px;font-size:13px;color:var(--text-2)"></div>
+      </div>
+      <div id="beranda-insight" class="card" style="padding:14px 16px;display:none">
+        <div id="beranda-insight-text" style="font-size:13px;color:var(--text-2)"></div>
+      </div>
+      <div class="section-label">Pengeluaran Terbaru</div>
+      <div id="beranda-list"></div>
+      <p id="beranda-empty" style="text-align:center;padding:40px 20px;color:var(--text-2);font-size:14px;display:none">
+        Belum ada catatan. Ketuk + untuk mulai!
+      </p>
+    </section>
+    <section id="screen-catatan" class="screen">
+      <div class="page-header">Catatan</div>
+
+      <div style="padding:0 16px 8px;display:flex;gap:8px;align-items:center">
+        <input id="cat-search" type="search" placeholder="Cari catatan..."
+          style="flex:1;padding:10px 14px;border-radius:10px;border:1px solid var(--border);
+          background:var(--raised);font-size:14px;font-family:var(--font);color:var(--text);outline:none">
+        <button id="cat-filter-btn"
+          style="width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--raised);font-size:18px">⚙️</button>
+      </div>
+
+      <div id="cat-months" style="display:flex;gap:8px;overflow-x:auto;padding:0 16px 8px;scrollbar-width:none"></div>
+
+      <div id="cat-summary-bar"
+        style="padding:10px 16px;font-size:13px;color:var(--text-2);border-bottom:1px solid var(--border)"></div>
+
+      <div id="cat-list"></div>
+      <p id="cat-empty" style="text-align:center;padding:40px 20px;color:var(--text-2);font-size:14px;display:none">
+        Tidak ada catatan.
+      </p>
+
+      <div id="filter-overlay" style="display:none;position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.4)"></div>
+      <div id="filter-drawer">
+        <div style="font-weight:700;margin-bottom:16px">Filter Kategori</div>
+        <div id="filter-cat-pills" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px"></div>
+        <button id="filter-apply-btn"
+          style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700">
+          Terapkan
+        </button>
+      </div>
+    </section>
+    <section id="screen-anggaran" class="screen">
+      <div class="page-header">Anggaran</div>
+      <div id="anggaran-list" style="padding:0 16px"></div>
+      <p id="anggaran-empty" style="text-align:center;padding:40px 20px;color:var(--text-2);font-size:14px">
+        Belum ada anggaran.
+      </p>
+      <div style="padding:0 16px 16px">
+        <button id="anggaran-add-btn"
+          style="width:100%;padding:12px;border:1.5px dashed var(--border);border-radius:12px;background:none;color:var(--text-2);font-size:14px">
+          + Atur anggaran
+        </button>
+      </div>
+
+      <div id="anggaran-overlay" style="display:none;position:fixed;inset:0;z-index:110;background:rgba(0,0,0,.4)"></div>
+      <div id="anggaran-modal">
+        <div style="font-weight:700;margin-bottom:16px">Atur Anggaran</div>
+        <label>Kategori</label>
+        <select id="anggaran-cat"></select>
+        <label>Batas (Rp)</label>
+        <input id="anggaran-limit" type="number" min="0" placeholder="500000">
+        <button id="anggaran-save-btn"
+          style="width:100%;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700">
+          Simpan
+        </button>
+      </div>
+    </section>
+    <section id="screen-profil" class="screen">
+      <div class="page-header">Profil</div>
+
+      <div class="card" style="padding:20px;display:flex;align-items:center;gap:16px">
+        <div id="profil-avatar" style="
+          width:56px;height:56px;border-radius:50%;background:var(--accent);
+          color:#fff;font-size:22px;font-weight:700;display:flex;align-items:center;
+          justify-content:center;flex-shrink:0">?</div>
+        <div>
+          <div id="profil-email" style="font-weight:600;font-size:15px">—</div>
+          <div style="font-size:12px;color:var(--text-2);margin-top:2px">Akun lokal</div>
+        </div>
+      </div>
+
+      <div class="section-label">Tampilan</div>
+      <div class="card">
+        <div class="settings-row">
+          <span>Tema</span>
+          <div style="display:flex;gap:6px">
+            <button class="theme-btn" data-theme="light">☀️ Terang</button>
+            <button class="theme-btn" data-theme="dark">🌙 Gelap</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">Tentang</div>
+      <div class="card">
+        <div class="settings-row"><span>CatetU</span><span style="color:var(--text-2);font-size:13px">v0.3.0</span></div>
+      </div>
+
+      <div style="padding:16px">
+        <button onclick="logout()" style="
+          width:100%;padding:12px;border:1.5px solid var(--danger);border-radius:10px;
+          color:var(--danger);background:none;font-size:15px;font-weight:600">Keluar</button>
+      </div>
+    </section>
 
     <nav id="tab-bar">
       <button class="tab active" data-screen="beranda"><span class="ti">🏠</span><span>Beranda</span></button>
@@ -157,7 +383,28 @@
     </nav>
     <button id="fab">+</button>
 
-    <!-- Quick-Add sheet inserted by Task 3 -->
+    <div id="sheet-overlay"></div>
+    <div id="quick-add-sheet">
+      <div id="sheet-handle"></div>
+      <div id="sheet-amount-display"><span id="sheet-amount-text">0</span></div>
+      <div id="sheet-cats"></div>
+      <div id="sheet-note"><input type="text" id="sheet-note-input" placeholder="Catatan (opsional)" maxlength="100"></div>
+      <div id="sheet-numpad">
+        <button class="np-key" data-k="7">7</button>
+        <button class="np-key" data-k="8">8</button>
+        <button class="np-key" data-k="9">9</button>
+        <button class="np-key" data-k="4">4</button>
+        <button class="np-key" data-k="5">5</button>
+        <button class="np-key" data-k="6">6</button>
+        <button class="np-key" data-k="1">1</button>
+        <button class="np-key" data-k="2">2</button>
+        <button class="np-key" data-k="3">3</button>
+        <button class="np-key" data-k="000">000</button>
+        <button class="np-key" data-k="0">0</button>
+        <button class="np-key" data-k="del">⌫</button>
+      </div>
+      <button id="sheet-simpan">Simpan</button>
+    </div>
   </div>
 
   <script>
@@ -242,9 +489,383 @@
 
     if (getToken()) { onAppReady(); } else { showAuthOverlay(); }
 
-    // STUBS — replaced in subsequent tasks
-    function openSheet() {}
-    function loadBeranda() {}
+    const CATS = {
+      'Makan & Minum':'🍽️','Transportasi':'🛵','Kos & Rumah':'🏠',
+      'Pulsa & Internet':'📱','Belanja':'🛍️','Hiburan':'🎉',
+      'Kesehatan':'💊','Pendidikan':'📚','Sedekah & Sosial':'🙏',
+      'Perawatan Diri':'✂️','Transfer & Hutang':'💸','Lainnya':'📦',
+    };
+    const CATEGORY_LIST = [
+      {emoji:'🍽️',label:'Makan & Minum'},{emoji:'🛵',label:'Transportasi'},
+      {emoji:'🏠',label:'Kos & Rumah'},{emoji:'📱',label:'Pulsa & Internet'},
+      {emoji:'🛍️',label:'Belanja'},{emoji:'🎉',label:'Hiburan'},
+      {emoji:'💊',label:'Kesehatan'},{emoji:'📚',label:'Pendidikan'},
+      {emoji:'🙏',label:'Sedekah & Sosial'},{emoji:'✂️',label:'Perawatan Diri'},
+      {emoji:'💸',label:'Transfer & Hutang'},{emoji:'📦',label:'Lainnya'},
+    ];
+
+    function formatRp(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+    function today() { return new Date().toISOString().split('T')[0]; }
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function monthRange(offsetMonths = 0) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + offsetMonths);
+      const from = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+      const to   = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
+      return { from, to };
+    }
+
+    async function loadBeranda() {
+      const { from, to } = monthRange();
+      const { from: lf, to: lt } = monthRange(-1);
+      const [r1, r2] = await Promise.all([
+        authFetch(`/expenses?startDate=${from}&endDate=${to}`),
+        authFetch(`/expenses?startDate=${lf}&endDate=${lt}`),
+      ]);
+      const expenses  = await r1.json();
+      const lastMonth = await r2.json();
+
+      const total     = expenses.reduce((s, e) => s + e.amount, 0);
+      const lastTotal = lastMonth.reduce((s, e) => s + e.amount, 0);
+
+      document.getElementById('beranda-total').textContent = formatRp(total);
+
+      const cmp = document.getElementById('beranda-compare');
+      if (lastTotal > 0) {
+        cmp.textContent = `${Math.round((total / lastTotal) * 100)}% dari bulan lalu`;
+        cmp.style.display = 'block';
+      }
+
+      if (expenses.length >= 3) {
+        const totals = {};
+        expenses.forEach(e => { totals[e.category] = (totals[e.category] || 0) + e.amount; });
+        const [topCat, topAmt] = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
+        document.getElementById('beranda-insight-text').textContent =
+          `${CATS[topCat] || '📦'} ${topCat} jadi pengeluaran terbesar bulan ini (${formatRp(topAmt)})`;
+        document.getElementById('beranda-insight').style.display = 'block';
+      }
+
+      renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
+    }
+
+    function renderDayGroups(expenses, listId, emptyId) {
+      const list  = document.getElementById(listId);
+      const empty = document.getElementById(emptyId);
+      if (!expenses.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+
+      const groups = {};
+      expenses.forEach(e => { (groups[e.date || today()] = groups[e.date || today()] || []).push(e); });
+
+      const todayStr = today();
+      const yest = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+      list.innerHTML = Object.entries(groups)
+        .sort(([a], [b]) => b.localeCompare(a))
+        .map(([date, items]) => {
+          const label = date === todayStr ? 'Hari ini' : date === yest ? 'Kemarin'
+            : new Date(date + 'T00:00:00').toLocaleDateString('id-ID', { day:'numeric', month:'long' });
+          return `
+            <div class="day-group-header">${label}</div>
+            <div class="day-group">
+              ${items.map(e => `
+                <div class="expense-row">
+                  <div class="expense-icon">${CATS[e.category] || '📦'}</div>
+                  <div class="expense-row-body">
+                    <div class="expense-row-name">${escHtml(e.note || e.category)}</div>
+                    <div class="expense-row-cat">${escHtml(e.category)}</div>
+                  </div>
+                  <div class="expense-row-amount">${formatRp(e.amount)}</div>
+                </div>`).join('')}
+            </div>`;
+        }).join('');
+    }
+
+    // QUICK-ADD SHEET
+    let sheetAmount = '';
+    let sheetCat = CATEGORY_LIST[0].label;
+
+    function renderCatPills() {
+      document.getElementById('sheet-cats').innerHTML = CATEGORY_LIST.map(c =>
+        `<button class="cat-pill${c.label === sheetCat ? ' selected' : ''}" data-cat="${escHtml(c.label)}">${c.emoji} ${escHtml(c.label)}</button>`
+      ).join('');
+      document.querySelectorAll('.cat-pill').forEach(btn =>
+        btn.addEventListener('click', () => { sheetCat = btn.dataset.cat; renderCatPills(); })
+      );
+    }
+
+    function updateAmountDisplay() {
+      const n = parseInt(sheetAmount || '0', 10);
+      document.getElementById('sheet-amount-text').textContent = n.toLocaleString('id-ID');
+    }
+
+    function openSheet() {
+      sheetAmount = '';
+      updateAmountDisplay();
+      document.getElementById('sheet-note-input').value = '';
+      sheetCat = CATEGORY_LIST[0].label;
+      renderCatPills();
+      document.getElementById('sheet-overlay').style.display = 'block';
+      document.getElementById('quick-add-sheet').classList.add('open');
+    }
+
+    function closeSheet() {
+      document.getElementById('quick-add-sheet').classList.remove('open');
+      document.getElementById('sheet-overlay').style.display = 'none';
+    }
+
+    document.getElementById('sheet-overlay').addEventListener('click', closeSheet);
+
+    document.getElementById('sheet-numpad').addEventListener('click', e => {
+      const k = e.target.closest('.np-key')?.dataset.k;
+      if (!k) return;
+      if (k === 'del') {
+        sheetAmount = sheetAmount.slice(0, -1);
+      } else {
+        if (sheetAmount.length + k.length > 10) return;
+        sheetAmount = String(parseInt((sheetAmount + k) || '0', 10));
+      }
+      updateAmountDisplay();
+    });
+
+    document.getElementById('sheet-simpan').addEventListener('click', async () => {
+      const amount = parseInt(sheetAmount || '0', 10);
+      if (!amount) return;
+      const btn = document.getElementById('sheet-simpan');
+      btn.disabled = true;
+      try {
+        const res = await authFetch('/expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            amount,
+            category: sheetCat,
+            note: document.getElementById('sheet-note-input').value.trim(),
+            date: today(),
+          }),
+        });
+        if (!res.ok) throw new Error();
+        closeSheet();
+        loadBeranda();
+      } catch (_) { alert('Gagal menyimpan. Coba lagi.'); }
+      finally { btn.disabled = false; }
+    });
+
+    // CATATAN
+    let allExpenses   = [];
+    let catMonth      = null;
+    let catFilterCats = new Set();
+    let catSearchQ    = '';
+
+    async function loadCatatan(range) {
+      const { from, to } = range || monthRange();
+      catMonth = range || null;
+      const res  = await authFetch(`/expenses?startDate=${from}&endDate=${to}`);
+      allExpenses = await res.json();
+      renderCatatan();
+    }
+
+    function renderCatatan() {
+      let list = allExpenses;
+      if (catFilterCats.size) list = list.filter(e => catFilterCats.has(e.category));
+      if (catSearchQ) list = list.filter(e =>
+        (e.note || '').toLowerCase().includes(catSearchQ) || e.category.toLowerCase().includes(catSearchQ)
+      );
+
+      const total = list.reduce((s, e) => s + e.amount, 0);
+      document.getElementById('cat-summary-bar').textContent = `${list.length} catatan · Total ${formatRp(total)}`;
+
+      const cont  = document.getElementById('cat-list');
+      const empty = document.getElementById('cat-empty');
+      if (!list.length) { cont.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+
+      const groups = {};
+      list.forEach(e => { (groups[e.date || today()] = groups[e.date || today()] || []).push(e); });
+      const todayStr = today();
+      const yest = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+      cont.innerHTML = Object.entries(groups)
+        .sort(([a], [b]) => b.localeCompare(a))
+        .map(([date, items]) => {
+          const label = date === todayStr ? 'Hari ini' : date === yest ? 'Kemarin'
+            : new Date(date + 'T00:00:00').toLocaleDateString('id-ID', { day:'numeric', month:'long' });
+          return `
+            <div class="day-group-header">${label}</div>
+            <div class="day-group">
+              ${items.map(e => `
+                <div class="swipe-row" data-id="${e.id}">
+                  <div class="swipe-action-bg">Hapus</div>
+                  <div class="swipe-row-content expense-row">
+                    <div class="expense-icon">${CATS[e.category] || '📦'}</div>
+                    <div class="expense-row-body">
+                      <div class="expense-row-name">${escHtml(e.note || e.category)}</div>
+                      <div class="expense-row-cat">${escHtml(e.category)}</div>
+                    </div>
+                    <div class="expense-row-amount">${formatRp(e.amount)}</div>
+                  </div>
+                </div>`).join('')}
+            </div>`;
+        }).join('');
+
+      cont.querySelectorAll('.swipe-row').forEach(row => {
+        const inner = row.querySelector('.swipe-row-content');
+        let startX = 0, dx = 0;
+        inner.addEventListener('pointerdown', e => { startX = e.clientX; dx = 0; inner.setPointerCapture(e.pointerId); });
+        inner.addEventListener('pointermove', e => {
+          dx = e.clientX - startX;
+          if (dx < 0) inner.style.transform = `translateX(${Math.max(dx, -72)}px)`;
+        });
+        inner.addEventListener('pointerup', async () => {
+          if (dx < -50) {
+            await authFetch(`/expenses/${row.dataset.id}`, { method: 'DELETE' });
+            allExpenses = allExpenses.filter(e => String(e.id) !== row.dataset.id);
+            loadBeranda();
+            renderCatatan();
+          } else {
+            inner.style.transform = '';
+          }
+        });
+      });
+    }
+
+    function buildMonthChips() {
+      const cont = document.getElementById('cat-months');
+      const months = Array.from({ length: 6 }, (_, i) => {
+        const r = monthRange(-i);
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        return { label: d.toLocaleDateString('id-ID', { month:'long', year:'numeric' }), range: r };
+      });
+      cont.innerHTML = months.map((m, i) =>
+        `<button class="month-chip${i === 0 ? ' active' : ''}" data-idx="${i}">${m.label}</button>`
+      ).join('');
+      cont.querySelectorAll('.month-chip').forEach(btn =>
+        btn.addEventListener('click', () => {
+          cont.querySelectorAll('.month-chip').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          loadCatatan(months[+btn.dataset.idx].range);
+        })
+      );
+    }
+
+    function openFilter() {
+      document.getElementById('filter-cat-pills').innerHTML = CATEGORY_LIST.map(c =>
+        `<button class="cat-pill${catFilterCats.has(c.label) ? ' selected' : ''}" data-cat="${escHtml(c.label)}">${c.emoji} ${escHtml(c.label)}</button>`
+      ).join('');
+      document.querySelectorAll('#filter-cat-pills .cat-pill').forEach(btn =>
+        btn.addEventListener('click', () => {
+          catFilterCats.has(btn.dataset.cat) ? catFilterCats.delete(btn.dataset.cat) : catFilterCats.add(btn.dataset.cat);
+          btn.classList.toggle('selected');
+        })
+      );
+      document.getElementById('filter-overlay').style.display = 'block';
+      document.getElementById('filter-drawer').classList.add('open');
+    }
+    function closeFilter() {
+      document.getElementById('filter-overlay').style.display = 'none';
+      document.getElementById('filter-drawer').classList.remove('open');
+    }
+
+    document.getElementById('filter-overlay').addEventListener('click', closeFilter);
+    document.getElementById('cat-filter-btn').addEventListener('click', openFilter);
+    document.getElementById('filter-apply-btn').addEventListener('click', () => { closeFilter(); renderCatatan(); });
+
+    let searchTimer;
+    document.getElementById('cat-search').addEventListener('input', e => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => { catSearchQ = e.target.value.toLowerCase(); renderCatatan(); }, 200);
+    });
+
+    document.querySelector('.tab[data-screen="catatan"]').addEventListener('click', () => {
+      buildMonthChips();
+      loadCatatan();
+    });
+
+    // ANGGARAN
+    function getBudgets() { return JSON.parse(localStorage.getItem('catetu_budgets') || '{}'); }
+    function saveBudgets(b) { localStorage.setItem('catetu_budgets', JSON.stringify(b)); }
+
+    function openAnggaranModal() {
+      document.getElementById('anggaran-cat').innerHTML = CATEGORY_LIST.map(c =>
+        `<option value="${escHtml(c.label)}">${c.emoji} ${escHtml(c.label)}</option>`
+      ).join('');
+      document.getElementById('anggaran-limit').value = '';
+      document.getElementById('anggaran-overlay').style.display = 'block';
+      document.getElementById('anggaran-modal').classList.add('open');
+    }
+    function closeAnggaranModal() {
+      document.getElementById('anggaran-overlay').style.display = 'none';
+      document.getElementById('anggaran-modal').classList.remove('open');
+    }
+
+    document.getElementById('anggaran-overlay').addEventListener('click', closeAnggaranModal);
+    document.getElementById('anggaran-add-btn').addEventListener('click', openAnggaranModal);
+    document.getElementById('anggaran-save-btn').addEventListener('click', () => {
+      const cat   = document.getElementById('anggaran-cat').value;
+      const limit = parseFloat(document.getElementById('anggaran-limit').value);
+      if (!limit || limit <= 0) return;
+      const b = getBudgets(); b[cat] = limit; saveBudgets(b);
+      closeAnggaranModal(); loadAnggaran();
+    });
+
+    async function loadAnggaran() {
+      const budgets = getBudgets();
+      const { from, to } = monthRange();
+      const res = await authFetch(`/expenses?startDate=${from}&endDate=${to}`);
+      const expenses = await res.json();
+
+      const spent = {};
+      expenses.forEach(e => { spent[e.category] = (spent[e.category] || 0) + e.amount; });
+
+      const list    = document.getElementById('anggaran-list');
+      const empty   = document.getElementById('anggaran-empty');
+      const entries = Object.entries(budgets);
+
+      if (!entries.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+
+      list.innerHTML = entries.map(([cat, limit]) => {
+        const s   = spent[cat] || 0;
+        const pct = Math.min(Math.round((s / limit) * 100), 100);
+        const color = pct >= 95 ? 'var(--danger)' : pct >= 80 ? 'var(--warn)' : 'var(--accent)';
+        const nudge = pct >= 95 ? ' · 🔴 Habis!' : pct >= 80 ? ' · ⚠️ Hampir habis' : '';
+        return `
+          <div class="card budget-card">
+            <div class="budget-card-top">
+              <div class="budget-label">${CATS[cat] || '📦'} ${escHtml(cat)}</div>
+              <div class="budget-amounts">${formatRp(s)} / ${formatRp(limit)}</div>
+            </div>
+            <div class="budget-track"><div class="budget-fill" style="width:${pct}%;background:${color}"></div></div>
+            <div class="budget-sisa">Sisa ${formatRp(Math.max(limit - s, 0))}${nudge}</div>
+          </div>`;
+      }).join('');
+    }
+
+    document.querySelector('.tab[data-screen="anggaran"]').addEventListener('click', loadAnggaran);
+
+    // PROFIL
+    async function loadProfil() {
+      try {
+        const res = await authFetch('/auth/me');
+        const user = await res.json();
+        const email = user.email || '';
+        document.getElementById('profil-email').textContent = email;
+        document.getElementById('profil-avatar').textContent = email.split('@')[0].slice(0, 2).toUpperCase();
+      } catch (_) {}
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('catetu_theme', theme);
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+    }
+    document.querySelectorAll('.theme-btn').forEach(btn => btn.addEventListener('click', () => applyTheme(btn.dataset.theme)));
+    applyTheme(localStorage.getItem('catetu_theme') || 'light');
+
+    document.querySelector('.tab[data-screen="profil"]').addEventListener('click', loadProfil);
   </script>
 </body>
 </html>
