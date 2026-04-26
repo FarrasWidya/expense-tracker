@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Map;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -28,7 +29,7 @@ class AuthControllerTest {
     void register_returnsToken() throws Exception {
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + uniqueEmail() + "\",\"password\":\"pass123\"}"))
+                        .content(objectMapper.writeValueAsString(Map.of("email", uniqueEmail(), "password", "pass123"))))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token").isString());
     }
@@ -38,12 +39,12 @@ class AuthControllerTest {
         String email = uniqueEmail();
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"password\":\"pass123\"}"))
+                        .content(objectMapper.writeValueAsString(Map.of("email", email, "password", "pass123"))))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"password\":\"pass123\"}"))
+                        .content(objectMapper.writeValueAsString(Map.of("email", email, "password", "pass123"))))
                 .andExpect(status().isConflict());
     }
 
@@ -52,12 +53,12 @@ class AuthControllerTest {
         String email = uniqueEmail();
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"password\":\"mypassword\"}"))
+                        .content(objectMapper.writeValueAsString(Map.of("email", email, "password", "mypassword"))))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"password\":\"mypassword\"}"))
+                        .content(objectMapper.writeValueAsString(Map.of("email", email, "password", "mypassword"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isString());
     }
@@ -67,12 +68,12 @@ class AuthControllerTest {
         String email = uniqueEmail();
         mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"password\":\"correctpass\"}"))
+                        .content(objectMapper.writeValueAsString(Map.of("email", email, "password", "correctpass"))))
                 .andExpect(status().isCreated());
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"password\":\"wrongpass\"}"))
+                        .content(objectMapper.writeValueAsString(Map.of("email", email, "password", "wrongpass"))))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -80,7 +81,7 @@ class AuthControllerTest {
     void login_nonExistentEmail_returns401() throws Exception {
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"nobody@test.com\",\"password\":\"pass\"}"))
+                        .content(objectMapper.writeValueAsString(Map.of("email", uniqueEmail(), "password", "pass"))))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -89,7 +90,7 @@ class AuthControllerTest {
         String email = uniqueEmail();
         String body = mockMvc.perform(post("/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"" + email + "\",\"password\":\"pass123\"}"))
+                        .content(objectMapper.writeValueAsString(Map.of("email", email, "password", "pass123"))))
                 .andReturn().getResponse().getContentAsString();
         String token = objectMapper.readTree(body).get("token").asText();
 
