@@ -157,6 +157,30 @@ class ExpenseControllerTest {
     }
 
     @Test
+    void updateExpense_otherUsersExpense_returns404() throws Exception {
+        String body = "{\"amount\":5000,\"category\":\"Food\",\"note\":\"mine\"}";
+        String created = mockMvc.perform(authed(post("/expenses"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andReturn().getResponse().getContentAsString();
+        Long id = objectMapper.readTree(created).get("id").asLong();
+
+        String email2 = UUID.randomUUID() + "@test.com";
+        String resp2 = mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", email2, "password", "pass"))))
+                .andReturn().getResponse().getContentAsString();
+        String token2 = objectMapper.readTree(resp2).get("token").asText();
+
+        String update = "{\"amount\":99999,\"category\":\"Other\",\"note\":\"hacked\"}";
+        mockMvc.perform(put("/expenses/" + id)
+                        .header("Authorization", "Bearer " + token2)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(update))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void filterByCategory_returnsOnlyMatchingExpenses() throws Exception {
         String body = "{\"amount\":5000,\"category\":\"Health\",\"note\":\"Vitamin\"}";
         mockMvc.perform(authed(post("/expenses"))
@@ -167,6 +191,7 @@ class ExpenseControllerTest {
         mockMvc.perform(authed(get("/expenses")).param("category", "Health"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[*].category", everyItem(is("Health"))));
     }
 
@@ -183,6 +208,7 @@ class ExpenseControllerTest {
                         .param("endDate", "2025-06-30"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[*].date", everyItem(is("2025-06-15"))));
     }
 

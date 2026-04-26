@@ -2,6 +2,7 @@ package com.faras.expense_tracker;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
@@ -49,6 +50,7 @@ public class ExpenseService {
         repository.delete(expense);
     }
 
+    @Transactional
     public Expense update(Long userId, Long id, Double amount, String category, String note, LocalDate date) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED));
