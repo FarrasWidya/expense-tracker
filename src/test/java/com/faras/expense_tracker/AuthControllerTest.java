@@ -106,4 +106,20 @@ class AuthControllerTest {
         mockMvc.perform(get("/auth/me"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    void me_includesNameAndAvatarFields() throws Exception {
+        String email = uniqueEmail();
+        String body = mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("email", email, "password", "pass123"))))
+                .andReturn().getResponse().getContentAsString();
+        String token = objectMapper.readTree(body).get("token").asText();
+
+        mockMvc.perform(get("/auth/me")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.avatarInitials").isString())
+                .andExpect(jsonPath("$.hasAvatar").value(false));
+    }
 }

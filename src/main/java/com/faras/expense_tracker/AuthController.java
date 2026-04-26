@@ -21,7 +21,7 @@ public class AuthController {
     public record RegisterRequest(String email, String password) {}
     public record LoginRequest(String email, String password) {}
     public record TokenResponse(String token) {}
-    public record UserResponse(Long id, String email, String provider) {}
+    public record UserResponse(Long id, String email, String provider, String name, String avatarInitials, boolean hasAvatar) {}
     public record ConfigResponse(boolean googleEnabled) {}
 
     @GetMapping("/config")
@@ -48,6 +48,15 @@ public class AuthController {
         }
         Long userId = (Long) auth.getPrincipal();
         User user = authService.getUser(userId);
-        return new UserResponse(user.getId(), user.getEmail(), user.getProvider().name());
+        String initials = deriveInitials(user.getName() != null ? user.getName() : user.getEmail());
+        return new UserResponse(user.getId(), user.getEmail(), user.getProvider().name(),
+                user.getName(), initials, user.getAvatarData() != null);
+    }
+
+    private static String deriveInitials(String value) {
+        if (value == null || value.isBlank()) return "?";
+        String[] parts = value.trim().split("[@\\s]+");
+        if (parts.length >= 2) return (parts[0].charAt(0) + "" + parts[1].charAt(0)).toUpperCase();
+        return parts[0].substring(0, Math.min(2, parts[0].length())).toUpperCase();
     }
 }
