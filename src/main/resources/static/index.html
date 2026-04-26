@@ -113,6 +113,24 @@
     .page-header { padding: 16px 20px 8px; font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
     .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--text-2); padding: 12px 20px 4px; }
     .card { margin: 8px 16px; background: var(--raised); border-radius: 12px; overflow: hidden; }
+
+    /* BERANDA */
+    .expense-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+    }
+    .expense-row:last-child { border-bottom: none; }
+    .expense-icon {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--accent-dim); display: flex; align-items: center;
+      justify-content: center; font-size: 20px; flex-shrink: 0;
+    }
+    .expense-row-body { flex: 1; min-width: 0; }
+    .expense-row-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .expense-row-cat { font-size: 12px; color: var(--text-2); }
+    .expense-row-amount { font-family: var(--mono); font-size: 14px; font-weight: 700; white-space: nowrap; }
+    .day-group-header { padding: 8px 16px 4px; font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; }
+    .day-group { background: var(--surface); margin: 0 16px 8px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
   </style>
 </head>
 <body>
@@ -143,7 +161,22 @@
 
   <!-- APP -->
   <div id="app">
-    <section id="screen-beranda" class="screen active"><!-- Task 2 --></section>
+    <section id="screen-beranda" class="screen active">
+      <div class="page-header">Beranda</div>
+      <div class="card" style="padding:20px 20px 16px">
+        <div style="font-size:12px;color:var(--text-2);margin-bottom:4px">Bulan ini</div>
+        <div id="beranda-total" style="font-family:var(--mono);font-size:36px;font-weight:700;letter-spacing:-1px">Rp 0</div>
+        <div id="beranda-compare" style="display:none;margin-top:6px;font-size:13px;color:var(--text-2)"></div>
+      </div>
+      <div id="beranda-insight" class="card" style="padding:14px 16px;display:none">
+        <div id="beranda-insight-text" style="font-size:13px;color:var(--text-2)"></div>
+      </div>
+      <div class="section-label">Pengeluaran Terbaru</div>
+      <div id="beranda-list"></div>
+      <p id="beranda-empty" style="text-align:center;padding:40px 20px;color:var(--text-2);font-size:14px;display:none">
+        Belum ada catatan. Ketuk + untuk mulai!
+      </p>
+    </section>
     <section id="screen-catatan" class="screen"><!-- Task 4 --></section>
     <section id="screen-anggaran" class="screen"><!-- Task 5 --></section>
     <section id="screen-profil" class="screen"><!-- Task 6 --></section>
@@ -242,9 +275,102 @@
 
     if (getToken()) { onAppReady(); } else { showAuthOverlay(); }
 
+    const CATS = {
+      'Makan & Minum':'🍽️','Transportasi':'🛵','Kos & Rumah':'🏠',
+      'Pulsa & Internet':'📱','Belanja':'🛍️','Hiburan':'🎉',
+      'Kesehatan':'💊','Pendidikan':'📚','Sedekah & Sosial':'🙏',
+      'Perawatan Diri':'✂️','Transfer & Hutang':'💸','Lainnya':'📦',
+    };
+    const CATEGORY_LIST = [
+      {emoji:'🍽️',label:'Makan & Minum'},{emoji:'🛵',label:'Transportasi'},
+      {emoji:'🏠',label:'Kos & Rumah'},{emoji:'📱',label:'Pulsa & Internet'},
+      {emoji:'🛍️',label:'Belanja'},{emoji:'🎉',label:'Hiburan'},
+      {emoji:'💊',label:'Kesehatan'},{emoji:'📚',label:'Pendidikan'},
+      {emoji:'🙏',label:'Sedekah & Sosial'},{emoji:'✂️',label:'Perawatan Diri'},
+      {emoji:'💸',label:'Transfer & Hutang'},{emoji:'📦',label:'Lainnya'},
+    ];
+
+    function formatRp(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+    function today() { return new Date().toISOString().split('T')[0]; }
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function monthRange(offsetMonths = 0) {
+      const d = new Date();
+      d.setMonth(d.getMonth() + offsetMonths);
+      const from = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0];
+      const to   = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
+      return { from, to };
+    }
+
+    async function loadBeranda() {
+      const { from, to } = monthRange();
+      const { from: lf, to: lt } = monthRange(-1);
+      const [r1, r2] = await Promise.all([
+        authFetch(`/expenses?startDate=${from}&endDate=${to}`),
+        authFetch(`/expenses?startDate=${lf}&endDate=${lt}`),
+      ]);
+      const expenses  = await r1.json();
+      const lastMonth = await r2.json();
+
+      const total     = expenses.reduce((s, e) => s + e.amount, 0);
+      const lastTotal = lastMonth.reduce((s, e) => s + e.amount, 0);
+
+      document.getElementById('beranda-total').textContent = formatRp(total);
+
+      const cmp = document.getElementById('beranda-compare');
+      if (lastTotal > 0) {
+        cmp.textContent = `${Math.round((total / lastTotal) * 100)}% dari bulan lalu`;
+        cmp.style.display = 'block';
+      }
+
+      if (expenses.length >= 3) {
+        const totals = {};
+        expenses.forEach(e => { totals[e.category] = (totals[e.category] || 0) + e.amount; });
+        const [topCat, topAmt] = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
+        document.getElementById('beranda-insight-text').textContent =
+          `${CATS[topCat] || '📦'} ${topCat} jadi pengeluaran terbesar bulan ini (${formatRp(topAmt)})`;
+        document.getElementById('beranda-insight').style.display = 'block';
+      }
+
+      renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
+    }
+
+    function renderDayGroups(expenses, listId, emptyId) {
+      const list  = document.getElementById(listId);
+      const empty = document.getElementById(emptyId);
+      if (!expenses.length) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+
+      const groups = {};
+      expenses.forEach(e => { (groups[e.date || today()] = groups[e.date || today()] || []).push(e); });
+
+      const todayStr = today();
+      const yest = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+      list.innerHTML = Object.entries(groups)
+        .sort(([a], [b]) => b.localeCompare(a))
+        .map(([date, items]) => {
+          const label = date === todayStr ? 'Hari ini' : date === yest ? 'Kemarin'
+            : new Date(date + 'T00:00:00').toLocaleDateString('id-ID', { day:'numeric', month:'long' });
+          return `
+            <div class="day-group-header">${label}</div>
+            <div class="day-group">
+              ${items.map(e => `
+                <div class="expense-row">
+                  <div class="expense-icon">${CATS[e.category] || '📦'}</div>
+                  <div class="expense-row-body">
+                    <div class="expense-row-name">${escHtml(e.note || e.category)}</div>
+                    <div class="expense-row-cat">${escHtml(e.category)}</div>
+                  </div>
+                  <div class="expense-row-amount">${formatRp(e.amount)}</div>
+                </div>`).join('')}
+            </div>`;
+        }).join('');
+    }
+
     // STUBS — replaced in subsequent tasks
     function openSheet() {}
-    function loadBeranda() {}
   </script>
 </body>
 </html>
