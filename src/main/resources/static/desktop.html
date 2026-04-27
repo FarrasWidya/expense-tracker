@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>CatetU Desktop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #00897B;
+  --accent-light: #E0F2F1;
+  --surface: #FAFAF8;
+  --surface-raised: #F3F2EF;
+  --border: #E5E4E1;
+  --text: #1A1A18;
+  --text-muted: #6B6B68;
+  --red: #E53935;
+  --amber: #F59E0B;
+  --sidebar-w: 260px;
+  --radius: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--surface);color:var(--text);height:100vh;overflow:hidden;display:flex}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select{font-family:inherit;font-size:14px}
+.hidden{display:none!important}
+
+/* ── Login Screen ── */
+#login-screen{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--surface);z-index:100
+}
+.login-card{
+  width:400px;background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:40px;box-shadow:0 4px 24px rgba(0,0,0,.07)
+}
+.login-card h1{font-size:24px;font-weight:700;color:var(--text);margin-bottom:4px}
+.login-card .tagline{font-size:13px;color:var(--text-muted);margin-bottom:28px}
+.tab-row{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:24px}
+.tab-btn{flex:1;padding:10px;font-size:14px;font-weight:500;background:#fff;color:var(--text-muted);transition:all .15s}
+.tab-btn.active{background:var(--accent);color:#fff}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.field label{font-size:12px;font-weight:600;color:var(--text-muted)}
+.field input{
+  padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:14px;outline:none;transition:border-color .15s
+}
+.field input:focus{border-color:var(--accent)}
+.btn-primary{
+  width:100%;padding:12px;background:var(--accent);color:#fff;
+  border-radius:var(--radius);font-size:15px;font-weight:600;margin-top:4px;
+  transition:opacity .15s
+}
+.btn-primary:hover{opacity:.9}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.divider{display:flex;align-items:center;gap:12px;color:var(--text-muted);font-size:12px;margin:20px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.btn-google{
+  width:100%;padding:11px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:10px;
+  background:#fff;transition:background .15s
+}
+.btn-google:hover{background:var(--surface-raised)}
+#login-error{font-size:13px;color:var(--red);margin-top:12px;display:none}
+
+/* ── App Shell ── */
+#app-shell{width:100%;height:100vh;display:flex;overflow:hidden}
+#sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);height:100vh;
+  background:var(--surface-raised);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto
+}
+#main-content{flex:1;overflow-y:auto;padding:28px 32px}
+
+/* ── Sidebar: logo + nav ── */
+#logo-area{padding:20px 20px 8px;border-bottom:1px solid var(--border);margin-bottom:8px}
+#logo-area .wordmark{font-size:18px;font-weight:700;color:var(--text)}
+#logo-area .wordmark span{color:var(--accent)}
+#user-chip{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;
+  margin:8px;background:#fff;border:1px solid var(--border);cursor:pointer
+}
+#user-chip .avatar{
+  width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0
+}
+#user-chip .uname{font-size:13px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-btn{
+  display:flex;align-items:center;gap:10px;padding:10px 16px;width:100%;
+  border-radius:8px;margin:1px 4px;width:calc(100% - 8px);
+  font-size:14px;font-weight:500;color:var(--text-muted);transition:all .15s
+}
+.nav-btn:hover{background:#eae9e5;color:var(--text)}
+.nav-btn.active{background:var(--accent-light);color:var(--accent);font-weight:600}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+
+/* ── Catat Rail ── */
+#catat-rail{
+  margin-top:auto;padding:16px;border-top:1px solid var(--border)
+}
+#catat-rail .rail-title{
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-muted);margin-bottom:12px
+}
+#rail-amount-display{
+  font-family:var(--font-mono,'JetBrains Mono',monospace);
+  font-size:26px;font-weight:500;color:var(--text);
+  padding:10px 0 6px;border-bottom:2px solid var(--border);
+  margin-bottom:12px;min-height:50px;cursor:text
+}
+#rail-amount-display.has-value{border-bottom-color:var(--accent)}
+.rail-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:12px}
+.np-btn{
+  padding:10px 0;font-size:15px;font-weight:500;border-radius:6px;
+  background:#fff;border:1px solid var(--border);transition:background .1s
+}
+.np-btn:hover{background:var(--surface-raised)}
+.np-btn.np-action{background:var(--surface-raised);color:var(--text-muted)}
+.cat-pills{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.cat-pill{
+  font-size:12px;padding:4px 8px;border-radius:20px;border:1px solid var(--border);
+  background:#fff;cursor:pointer;transition:all .1s;white-space:nowrap
+}
+.cat-pill.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+#rail-note{
+  width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;
+  font-size:13px;outline:none;margin-bottom:8px;resize:none
+}
+#rail-note:focus{border-color:var(--accent)}
+#rail-save-btn{
+  width:100%;padding:11px;background:var(--accent);color:#fff;border-radius:8px;
+  font-size:14px;font-weight:600;transition:opacity .15s
+}
+#rail-save-btn:hover{opacity:.9}
+#rail-save-btn:disabled{opacity:.4;cursor:not-allowed}
+.rail-saved-toast{
+  font-size:12px;color:var(--accent);font-weight:600;text-align:center;
+  margin-top:6px;opacity:0;transition:opacity .3s
+}
+
+/* ── Views ── */
+.view-title{font-size:22px;font-weight:700;margin-bottom:4px}
+.view-subtitle{font-size:14px;color:var(--text-muted);margin-bottom:24px}
+
+/* ── Quick-add Overlay ── */
+#quickadd-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;
+  display:flex;align-items:center;justify-content:center
+}
+#quickadd-card{
+  width:440px;background:#fff;border-radius:12px;
+  padding:28px;box-shadow:0 8px 40px rgba(0,0,0,.15)
+}
+#quickadd-card h2{font-size:16px;font-weight:700;margin-bottom:16px}
+#overlay-amount-display{
+  font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:500;
+  padding:8px 0 8px;border-bottom:2px solid var(--border);margin-bottom:16px;min-height:54px
+}
+#overlay-amount-display.has-value{border-bottom-color:var(--accent)}
+.overlay-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px}
+.overlay-np-btn{
+  padding:12px 0;font-size:16px;font-weight:500;border-radius:8px;
+  background:var(--surface-raised);border:none;transition:background .1s
+}
+.overlay-np-btn:hover{background:#e0dfd9}
+.overlay-np-btn.np-action{color:var(--text-muted)}
+.overlay-cat-pills{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+#overlay-note{
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;
+  font-size:13px;outline:none;margin-bottom:12px
+}
+#overlay-note:focus{border-color:var(--accent)}
+.overlay-footer{display:flex;gap:8px}
+#overlay-save-btn{
+  flex:1;padding:12px;background:var(--accent);color:#fff;border-radius:8px;
+  font-size:15px;font-weight:600
+}
+#overlay-save-btn:hover{opacity:.9}
+#overlay-cancel-btn{
+  padding:12px 16px;border:1px solid var(--border);border-radius:8px;
+  font-size:14px;font-weight:500;color:var(--text-muted)
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ LOGIN SCREEN ═══════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1>Catet<span style="color:var(--accent)">U</span></h1>
+    <p class="tagline">Ngerti uangmu, pelan-pelan.</p>
+    <div class="tab-row">
+      <button class="tab-btn active" data-tab="masuk" onclick="switchTab('masuk')">Masuk</button>
+      <button class="tab-btn" data-tab="daftar" onclick="switchTab('daftar')">Daftar</button>
+    </div>
+
+    <div id="tab-masuk">
+      <div class="field"><label>Email</label><input id="l-email" type="email" placeholder="kamu@email.com"></div>
+      <div class="field"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••"></div>
+      <button class="btn-primary" onclick="doLogin()">Masuk</button>
+      <div class="divider" id="google-divider">atau</div>
+      <button class="btn-google" id="google-btn" onclick="doGoogleLogin()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Masuk dengan Google
+      </button>
+    </div>
+
+    <div id="tab-daftar" class="hidden">
+      <div class="field"><label>Email</label><input id="r-email" type="email" placeholder="kamu@email.com"></div>
+      <div class="field"><label>Password</label><input id="r-pass" type="password" placeholder="min. 6 karakter"></div>
+      <button class="btn-primary" onclick="doRegister()">Buat Akun</button>
+    </div>
+
+    <p id="login-error"></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════ APP SHELL ═══════════════════════ -->
+<div id="app-shell" class="hidden">
+  <aside id="sidebar">
+    <div id="logo-area">
+      <div class="wordmark">Catet<span>U</span></div>
+    </div>
+
+    <div id="user-chip" onclick="navigate('profil')">
+      <div class="avatar" id="sidebar-avatar">?</div>
+      <span class="uname" id="sidebar-name">…</span>
+    </div>
+
+    <nav style="padding:8px 4px">
+      <button class="nav-btn active" data-view="beranda" onclick="navigate('beranda')"><span class="nav-icon">🏠</span>Beranda</button>
+      <button class="nav-btn" data-view="catatan" onclick="navigate('catatan')"><span class="nav-icon">📋</span>Catatan</button>
+      <button class="nav-btn" data-view="anggaran" onclick="navigate('anggaran')"><span class="nav-icon">💰</span>Anggaran</button>
+      <button class="nav-btn" data-view="profil" onclick="navigate('profil')"><span class="nav-icon">👤</span>Profil</button>
+    </nav>
+
+    <div id="catat-rail">
+      <div class="rail-title">Catat Cepat</div>
+      <div id="rail-amount-display" onclick="focusRail()">Rp 0</div>
+      <div class="rail-numpad" id="rail-numpad"></div>
+      <div class="cat-pills" id="rail-cat-pills"></div>
+      <textarea id="rail-note" rows="1" placeholder="Catatan (opsional)"></textarea>
+      <button id="rail-save-btn" onclick="saveRail()" disabled>Simpan</button>
+      <div class="rail-saved-toast" id="rail-toast">Tersimpan! ✓</div>
+    </div>
+  </aside>
+
+  <main id="main-content">
+    <div id="view-beranda" class="view">
+      <div class="view-title">Beranda</div>
+      <div class="view-subtitle" id="beranda-month">April 2026</div>
+      <!-- populated by JS -->
+    </div>
+    <div id="view-catatan" class="view hidden">
+      <div class="view-title">Catatan</div>
+      <!-- populated by JS -->
+    </div>
+    <div id="view-anggaran" class="view hidden">
+      <div class="view-title">Anggaran</div>
+      <!-- populated by JS -->
+    </div>
+    <div id="view-profil" class="view hidden">
+      <div class="view-title">Profil & Pengaturan</div>
+      <!-- populated by JS -->
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════════════════ QUICK-ADD OVERLAY ═══════════════════════ -->
+<div id="quickadd-overlay" class="hidden" onclick="overlayBgClick(event)">
+  <div id="quickadd-card">
+    <h2>Catat Cepat <kbd style="font-size:11px;opacity:.5">⌘N</kbd></h2>
+    <div id="overlay-amount-display">Rp 0</div>
+    <div class="overlay-numpad" id="overlay-numpad"></div>
+    <div class="overlay-cat-pills" id="overlay-cat-pills"></div>
+    <input id="overlay-note" type="text" placeholder="Catatan (opsional)">
+    <div class="overlay-footer">
+      <button id="overlay-cancel-btn" onclick="closeOverlay()">Batal</button>
+      <button id="overlay-save-btn" onclick="saveOverlay()" disabled>Simpan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  CONFIG & STATE
+// ════════════════════════════════════════════════════
+const API = '';
+const CATEGORIES = [
+  {emoji:'🍽️',label:'Makan & Minum'},
+  {emoji:'🛵',label:'Transportasi'},
+  {emoji:'🏠',label:'Kos & Rumah'},
+  {emoji:'📱',label:'Pulsa & Internet'},
+  {emoji:'🛍️',label:'Belanja'},
+  {emoji:'🎉',label:'Hiburan'},
+  {emoji:'💊',label:'Kesehatan'},
+  {emoji:'📚',label:'Pendidikan'},
+  {emoji:'🙏',label:'Sedekah & Sosial'},
+  {emoji:'✂️',label:'Perawatan Diri'},
+  {emoji:'💸',label:'Transfer & Hutang'},
+  {emoji:'📦',label:'Lainnya'},
+];
+
+let token = localStorage.getItem('catetu_desktop_token');
+let currentUser = null;
+let currentView = 'beranda';
+
+// numpad state (shared, keyed by 'rail' or 'overlay')
+const npState = { rail: { raw: '', cat: null }, overlay: { raw: '', cat: null } };
+
+// ════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  if (r.status === 401) { logout(); return null; }
+  return r;
+}
+
+async function init() {
+  // handle OAuth redirect
+  const params = new URLSearchParams(location.search);
+  if (params.has('token')) {
+    token = params.get('token');
+    localStorage.setItem('catetu_desktop_token', token);
+    history.replaceState(null, '', '/desktop.html');
+  }
+  if (!token) { showLogin(); return; }
+  const r = await api('GET', '/auth/me');
+  if (!r || !r.ok) { showLogin(); return; }
+  currentUser = await r.json();
+  showApp();
+}
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-shell').classList.add('hidden');
+  // check if Google OAuth is available
+  api('GET', '/auth/config').then(r => r && r.json()).then(cfg => {
+    if (cfg && !cfg.googleEnabled) {
+      document.getElementById('google-divider').classList.add('hidden');
+      document.getElementById('google-btn').classList.add('hidden');
+    }
+  });
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').classList.remove('hidden');
+  updateSidebarUser();
+  buildNumpad('rail', 'rail-numpad', 'rail-amount-display', 'rail-save-btn');
+  buildCatPills('rail', 'rail-cat-pills');
+  buildNumpad('overlay', 'overlay-numpad', 'overlay-amount-display', 'overlay-save-btn');
+  buildCatPills('overlay', 'overlay-cat-pills');
+  navigate('beranda');
+}
+
+function updateSidebarUser() {
+  if (!currentUser) return;
+  const av = document.getElementById('sidebar-avatar');
+  const nm = document.getElementById('sidebar-name');
+  av.textContent = currentUser.avatarInitials || '?';
+  nm.textContent = currentUser.name || currentUser.email;
+}
+
+function logout() {
+  localStorage.removeItem('catetu_desktop_token');
+  token = null;
+  currentUser = null;
+  showLogin();
+}
+
+async function doLogin() {
+  const email = document.getElementById('l-email').value;
+  const pass = document.getElementById('l-pass').value;
+  showErr('');
+  const r = await fetch('/auth/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({email, password: pass})
+  });
+  if (r.ok) {
+    const d = await r.json();
+    token = d.token;
+    localStorage.setItem('catetu_desktop_token', token);
+    const me = await api('GET', '/auth/me');
+    currentUser = await me.json();
+    showApp();
+  } else {
+    const msg = r.status === 401 ? 'Email atau password salah.' : 'Terjadi kesalahan.';
+    showErr(msg);
+  }
+}
+
+async function doRegister() {
+  const email = document.getElementById('r-email').value;
+  const pass = document.getElementById('r-pass').value;
+  showErr('');
+  const r = await fetch('/auth/register', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({email, password: pass})
+  });
+  if (r.ok) {
+    const d = await r.json();
+    token = d.token;
+    localStorage.setItem('catetu_desktop_token', token);
+    const me = await api('GET', '/auth/me');
+    currentUser = await me.json();
+    showApp();
+  } else if (r.status === 409) {
+    showErr('Email sudah terdaftar. Coba Masuk.');
+  } else {
+    showErr('Terjadi kesalahan.');
+  }
+}
+
+function doGoogleLogin() {
+  document.cookie = 'catetu_origin=desktop; path=/; max-age=300';
+  window.location.href = '/oauth2/authorization/google';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('tab-masuk').classList.toggle('hidden', tab !== 'masuk');
+  document.getElementById('tab-daftar').classList.toggle('hidden', tab !== 'daftar');
+  showErr('');
+}
+
+function showErr(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+// ════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════
+function navigate(view) {
+  currentView = view;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  document.getElementById('view-' + view).classList.remove('hidden');
+  if (view === 'beranda') loadBeranda();
+  if (view === 'catatan') loadCatatan();
+  if (view === 'anggaran') loadAnggaran();
+  if (view === 'profil') loadProfil();
+}
+
+// Stubs — filled in later tasks
+function loadBeranda() {}
+function loadCatatan() {}
+function loadAnggaran() {}
+function loadProfil() {}
+
+// ════════════════════════════════════════════════════
+//  NUMPAD
+// ════════════════════════════════════════════════════
+function buildNumpad(scope, containerId, displayId, saveBtnId) {
+  const container = document.getElementById(containerId);
+  const keys = ['1','2','3','4','5','6','7','8','9','000','0','⌫'];
+  container.innerHTML = '';
+  keys.forEach(k => {
+    const btn = document.createElement('button');
+    btn.textContent = k;
+    btn.className = (k === '⌫') ? (scope === 'rail' ? 'np-btn np-action' : 'overlay-np-btn np-action') : (scope === 'rail' ? 'np-btn' : 'overlay-np-btn');
+    btn.addEventListener('click', () => numpadPress(scope, k, displayId, saveBtnId));
+    if (k === '⌫') {
+      btn.addEventListener('dblclick', () => {
+        npState[scope].raw = '';
+        updateNumpadDisplay(scope, displayId, saveBtnId);
+      });
+    }
+    container.appendChild(btn);
+  });
+}
+
+function numpadPress(scope, key, displayId, saveBtnId) {
+  let raw = npState[scope].raw;
+  if (key === '⌫') raw = raw.slice(0, -1);
+  else if (raw.length < 12) raw += key;
+  npState[scope].raw = raw;
+  updateNumpadDisplay(scope, displayId, saveBtnId);
+}
+
+function updateNumpadDisplay(scope, displayId, saveBtnId) {
+  const raw = npState[scope].raw;
+  const num = parseInt(raw || '0', 10);
+  const display = document.getElementById(displayId);
+  display.textContent = 'Rp ' + num.toLocaleString('id-ID');
+  display.classList.toggle('has-value', num > 0);
+  document.getElementById(saveBtnId).disabled = num <= 0 || !npState[scope].cat;
+}
+
+function buildCatPills(scope, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  CATEGORIES.forEach(c => {
+    const pill = document.createElement('button');
+    pill.textContent = c.emoji + ' ' + c.label;
+    pill.className = 'cat-pill';
+    pill.onclick = () => selectCat(scope, c.label, containerId,
+      scope === 'rail' ? 'rail-save-btn' : 'overlay-save-btn',
+      scope === 'rail' ? 'rail-amount-display' : 'overlay-amount-display');
+    container.appendChild(pill);
+  });
+}
+
+function selectCat(scope, label, containerId, saveBtnId, displayId) {
+  npState[scope].cat = label;
+  document.querySelectorAll('#' + containerId + ' .cat-pill').forEach(p =>
+    p.classList.toggle('selected', p.textContent.includes(label)));
+  updateNumpadDisplay(scope, displayId, saveBtnId);
+}
+
+// ════════════════════════════════════════════════════
+//  CATAT RAIL
+// ════════════════════════════════════════════════════
+function focusRail() {/* no-op — numpad is the input */}
+
+async function saveRail() {
+  const amount = parseInt(npState.rail.raw || '0', 10);
+  const category = npState.rail.cat;
+  if (!amount || !category) return;
+  const note = document.getElementById('rail-note').value;
+  const today = new Date().toISOString().split('T')[0];
+  const r = await api('POST', '/expenses', {amount, category, note, date: today});
+  if (r && r.ok) {
+    npState.rail.raw = '';
+    npState.rail.cat = null;
+    document.getElementById('rail-note').value = '';
+    updateNumpadDisplay('rail', 'rail-amount-display', 'rail-save-btn');
+    document.querySelectorAll('#rail-cat-pills .cat-pill').forEach(p => p.classList.remove('selected'));
+    const toast = document.getElementById('rail-toast');
+    toast.style.opacity = '1';
+    setTimeout(() => toast.style.opacity = '0', 2000);
+    if (currentView === 'beranda') loadBeranda();
+    if (currentView === 'catatan') loadCatatan();
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  QUICK-ADD OVERLAY (⌘N / Ctrl+N)
+// ════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  const overlay = document.getElementById('quickadd-overlay');
+  const isOverlayOpen = !overlay.classList.contains('hidden');
+  if ((e.metaKey || e.ctrlKey) && e.key === 'n' && !isOverlayOpen) {
+    const active = document.activeElement;
+    const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+    if (!isInput && document.getElementById('app-shell') && !document.getElementById('app-shell').classList.contains('hidden')) {
+      e.preventDefault();
+      openOverlay();
+    }
+  }
+  if (e.key === 'Escape' && isOverlayOpen) closeOverlay();
+});
+
+function openOverlay() {
+  npState.overlay.raw = '';
+  npState.overlay.cat = null;
+  document.getElementById('overlay-amount-display').textContent = 'Rp 0';
+  document.getElementById('overlay-amount-display').classList.remove('has-value');
+  document.getElementById('overlay-note').value = '';
+  document.getElementById('overlay-save-btn').disabled = true;
+  document.querySelectorAll('#overlay-cat-pills .cat-pill').forEach(p => p.classList.remove('selected'));
+  document.getElementById('quickadd-overlay').classList.remove('hidden');
+}
+
+function closeOverlay() {
+  document.getElementById('quickadd-overlay').classList.add('hidden');
+}
+
+function overlayBgClick(e) {
+  if (e.target.id === 'quickadd-overlay') closeOverlay();
+}
+
+async function saveOverlay() {
+  const amount = parseInt(npState.overlay.raw || '0', 10);
+  const category = npState.overlay.cat;
+  if (!amount || !category) return;
+  const note = document.getElementById('overlay-note').value;
+  const today = new Date().toISOString().split('T')[0];
+  const r = await api('POST', '/expenses', {amount, category, note, date: today});
+  if (r && r.ok) {
+    closeOverlay();
+    if (currentView === 'beranda') loadBeranda();
+    if (currentView === 'catatan') loadCatatan();
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
