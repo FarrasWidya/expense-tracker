@@ -1067,6 +1067,116 @@ async function deleteFromSlideOver() {
   if (r && r.ok) { closeSlideOver(); await loadCatatan(); }
 }
 
+// ── Phase 5: Insight Engine (desktop) ──
+function isoWeek(date = new Date()) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const y = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return `${d.getUTCFullYear()}-W${String(Math.ceil((((d - y) / 86400000) + 1) / 7)).padStart(2, '00')}`;
+}
+
+function getDismissedD() { return JSON.parse(localStorage.getItem('catetu_dismissed_insights') || '[]'); }
+function addDismissedD(id) {
+  const d = getDismissedD();
+  if (!d.includes(id)) d.push(id);
+  localStorage.setItem('catetu_dismissed_insights', JSON.stringify(d));
+}
+function maybeClearMonthlyDismissals() {
+  const key = 'catetu_dismissed_insights_month';
+  const now = new Date();
+  const cur = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  if (now.getDate() === 1 && localStorage.getItem(key) !== cur) {
+    localStorage.removeItem('catetu_dismissed_insights');
+    localStorage.setItem(key, cur);
+  }
+}
+
+function computeInsightsD(expenses, lastMonthTotal) {
+  maybeClearMonthlyDismissals();
+  const dismissed = getDismissedD();
+  const now = new Date();
+  const daysElapsed = Math.max(now.getDate(), 1);
+  const results = [];
+
+  if (!expenses || expenses.length === 0) return results;
+
+  if (!dismissed.includes('top-category')) {
+    const totals = {};
+    expenses.forEach(e => { totals[e.category] = (totals[e.category]||0)+e.amount; });
+    const [cat, amt] = Object.entries(totals).sort((a,b) => b[1]-a[1])[0];
+    const emoji = catEmoji(cat);
+    results.push({ id: 'top-category', text: `Pengeluaran terbesar bulan ini: ${emoji} ${cat} — ${fmtRp(amt)}` });
+  }
+  if (!dismissed.includes('savings-vs-last') && lastMonthTotal > 0) {
+    const thisTotal = expenses.reduce((s, e) => s + e.amount, 0);
+    const pct = Math.round((thisTotal / lastMonthTotal) * 100);
+    if (pct < 100) results.push({ id: 'savings-vs-last', text: `Hemat ${100-pct}% dibanding bulan lalu 🎉` });
+  }
+  if (!dismissed.includes('busiest-day') && expenses.length >= 3) {
+    const byDay = {};
+    expenses.forEach(e => { const d = (e.date||'').substring(0,10); byDay[d] = (byDay[d]||0)+1; });
+    const [day, count] = Object.entries(byDay).sort((a,b) => b[1]-a[1])[0];
+    if (count >= 3) {
+      const label = new Date(day+'T00:00:00').toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'short'});
+      results.push({ id: 'busiest-day', text: `Hari tersibuk: ${label} — ${count} transaksi` });
+    }
+  }
+  if (!dismissed.includes('daily-avg')) {
+    const avg = Math.round(expenses.reduce((s,e)=>s+e.amount,0)/daysElapsed);
+    results.push({ id: 'daily-avg', text: `Rata-rata harian bulan ini: ${fmtRp(avg)}` });
+  }
+  if (!dismissed.includes('top-frequency') && expenses.length >= 5) {
+    const freq = {};
+    expenses.forEach(e => { freq[e.category] = (freq[e.category]||0)+1; });
+    const [cat, n] = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
+    if (n >= 3) results.push({ id: 'top-frequency', text: `Paling sering: ${catEmoji(cat)} ${cat} (${n}x bulan ini)` });
+  }
+  return results.slice(0, 3);
+}
+
+function dismissInsightD(id) {
+  addDismissedD(id);
+  document.querySelector(`.insight-card-d[data-insight-id="${id}"]`)?.remove();
+}
+
+async function getWeeklyInsightHtml() {
+  const weekKey = 'catetu_weekly_insight_week';
+  const cardKey = 'catetu_weekly_insight_card';
+  const dismissKey = 'catetu_weekly_card_dismissed_week';
+  const now = new Date();
+  const curWeek = isoWeek(now);
+  if (localStorage.getItem(dismissKey) === curWeek) return '';
+
+  if (now.getDay() === 1 && localStorage.getItem(weekKey) !== curWeek) {
+    const end = now.toISOString().split('T')[0];
+    const startD = new Date(now); startD.setDate(startD.getDate() - 6);
+    const start = startD.toISOString().split('T')[0];
+    try {
+      const r = await api('GET', `/expenses?startDate=${start}&endDate=${end}`);
+      if (r && r.ok) {
+        const exp = await r.json();
+        if (exp.length > 0) {
+          const totals = {};
+          exp.forEach(e => { totals[e.category] = (totals[e.category]||0)+e.amount; });
+          const [cat, amt] = Object.entries(totals).sort((a,b)=>b[1]-a[1])[0];
+          localStorage.setItem(cardKey, `Minggu lalu, ${catEmoji(cat)} ${cat} jadi pengeluaran terbesar (${fmtRp(amt)})`);
+          localStorage.setItem(weekKey, curWeek);
+        }
+      }
+    } catch (_) {}
+  }
+
+  const saved = localStorage.getItem(cardKey);
+  if (!saved || localStorage.getItem(weekKey) !== curWeek) return '';
+  return `<div class="weekly-card-d">${saved}<button class="weekly-dismiss-d" onclick="dismissWeeklyCardD()">×</button></div>`;
+}
+
+function dismissWeeklyCardD() {
+  localStorage.setItem('catetu_weekly_card_dismissed_week', isoWeek());
+  document.querySelector('.weekly-card-d')?.remove();
+}
+
 async function loadBeranda() {
   const view = document.getElementById('view-beranda');
   const now = new Date();
@@ -1102,9 +1212,20 @@ async function loadBeranda() {
 
   const recent = [...thisMonth].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 8);
 
+  const insightCards = computeInsightsD(thisMonth, totalLast);
+  const insightRowHtml = insightCards.length
+    ? `<div class="insight-row-d">${insightCards.map(c =>
+        `<div class="insight-card-d" data-insight-id="${c.id}">${c.text}<button class="insight-dismiss-d" onclick="dismissInsightD('${c.id}')">×</button></div>`
+      ).join('')}</div>`
+    : '';
+
+  const weeklyHtml = await getWeeklyInsightHtml();
+
   view.innerHTML = `
     <div class="view-title">Beranda</div>
     <div class="view-subtitle" id="beranda-month">${monthLabel}</div>
+    ${weeklyHtml}
+    ${insightRowHtml}
     <div class="stat-grid">
       <div class="stat-tile" onclick="navigate('catatan')">
         <div class="tile-label">Bulan Ini</div>
