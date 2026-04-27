@@ -14,8 +14,9 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.is;
+import org.springframework.http.HttpHeaders;
+
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -216,5 +217,78 @@ class ExpenseControllerTest {
     void expenses_withoutToken_returns401() throws Exception {
         mockMvc.perform(get("/expenses"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void batchDelete_removesOnlyRequestedIds() throws Exception {
+        Long id1 = createExpense("Food", 10000.0);
+        Long id2 = createExpense("Transport", 20000.0);
+        Long id3 = createExpense("Food", 30000.0);
+
+        String body = "{\"ids\":[" + id1 + "," + id2 + "]}";
+        mockMvc.perform(authed(delete("/expenses/batch"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(authed(get("/expenses")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].id").value(id3));
+    }
+
+    @Test
+    void batchUpdateCategory_changesCategoryForRequestedIds() throws Exception {
+        Long id1 = createExpense("Food", 10000.0);
+        Long id2 = createExpense("Food", 20000.0);
+        Long id3 = createExpense("Food", 30000.0);
+
+        String body = "{\"ids\":[" + id1 + "," + id2 + "],\"category\":\"Transport\"}";
+        mockMvc.perform(authed(patch("/expenses/batch/category"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[*].category", everyItem(is("Transport"))));
+
+        mockMvc.perform(authed(get("/expenses")))
+                .andExpect(jsonPath("$[?(@.id==" + id3 + ")].category", hasItem("Food")));
+    }
+
+    @Test
+    void exportCsv_returnsTextCsvWithHeader() throws Exception {
+        createExpense("Food", 50000.0);
+        mockMvc.perform(authed(get("/expenses/export?format=csv")))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE, containsString("text/csv")))
+                .andExpect(content().string(containsString("Tanggal")))
+                .andExpect(content().string(containsString("50000")));
+    }
+
+    @Test
+    void exportJson_returnsJsonArray() throws Exception {
+        createExpense("Food", 50000.0);
+        mockMvc.perform(authed(get("/expenses/export?format=json")))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$[0].amount").value(50000.0));
+    }
+
+    @Test
+    void exportExcel_returnsXlsxBytes() throws Exception {
+        createExpense("Food", 50000.0);
+        mockMvc.perform(authed(get("/expenses/export?format=excel")))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.CONTENT_TYPE,
+                        containsString("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")));
+    }
+
+    private Long createExpense(String category, double amount) throws Exception {
+        String body = String.format("{\"amount\":%.1f,\"category\":\"%s\",\"note\":\"test\",\"date\":\"2026-04-27\"}", amount, category);
+        String resp = mockMvc.perform(authed(post("/expenses"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readTree(resp).get("id").asLong();
     }
 }
