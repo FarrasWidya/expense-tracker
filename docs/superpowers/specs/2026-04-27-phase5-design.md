@@ -131,7 +131,7 @@ Every Phase 5 feature checks against: *"Does this make the app feel warmer and s
 
 **Logic:**
 1. Read `catetu_payday_date` (day of month, 1–31). If not set, don't show.
-2. Compute distance from today to payday this month. If |distance| ≤ 3, show banner.
+2. Compute distance from today to payday this month (current calendar month only — no cross-month lookahead). If |distance| ≤ 3, show banner. Cross-month edge cases (e.g., payday = 1st, today = Dec 29) do not show the banner; acceptable for Phase 5.
 3. Banner is dismissible per occurrence (`catetu_payday_dismissed_month` = `YYYY-MM`).
 
 **User setting:** Payday date set in Profil → Pengaturan. Empty = feature off.
