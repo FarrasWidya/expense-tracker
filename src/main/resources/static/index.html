@@ -782,6 +782,7 @@
       const todayStr = today();
       const todayCount = expenses.filter(e => (e.date||'').substring(0,10) === todayStr).length;
       scheduleNudge(todayCount);
+      checkMonthlySummary();
 
       renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
     }
@@ -1122,6 +1123,58 @@
     }
 
     function openQuickAdd() { document.getElementById('fab')?.click(); }
+
+    async function checkMonthlySummary() {
+      const now = new Date();
+      if (now.getDate() > 3) return;
+      const curMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      if (localStorage.getItem('catetu_last_summary_month') === curMonth) return;
+
+      const { from: lf, to: lt } = monthRange(-1);
+      const { from: llf, to: llt } = monthRange(-2);
+      try {
+        const [r1, r2] = await Promise.all([
+          authFetch(`/expenses?startDate=${lf}&endDate=${lt}`),
+          authFetch(`/expenses?startDate=${llf}&endDate=${llt}`),
+        ]);
+        const prev = await r1.json();
+        const prevPrev = await r2.json();
+        if (prev.length === 0) return;
+
+        const total = prev.reduce((s, e) => s + e.amount, 0);
+        const totalPP = prevPrev.reduce((s, e) => s + e.amount, 0);
+        const pct = totalPP > 0 ? Math.round((total / totalPP) * 100) : null;
+        const pctLabel = pct !== null
+          ? (pct < 100 ? `↓ hemat ${100-pct}% dari sebelumnya` : `↑ ${pct-100}% dari sebelumnya`)
+          : '';
+
+        const catTotals = {};
+        prev.forEach(e => { catTotals[e.category] = (catTotals[e.category]||0)+e.amount; });
+        const top3 = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+        const prevDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+        const monthLabel = prevDate.toLocaleDateString('id-ID', {month:'long', year:'numeric'});
+
+        document.getElementById('monthly-summary-title').textContent = `Ringkasan ${monthLabel}`;
+        document.getElementById('monthly-summary-sub').textContent = pctLabel;
+        document.getElementById('monthly-summary-total').textContent = formatRp(total);
+        document.getElementById('monthly-summary-rows').innerHTML =
+          top3.map(([cat, amt]) =>
+            `<div class="monthly-row"><span>${CATS[cat]||'📦'} ${escHtml(cat)}</span><span>${formatRp(amt)}</span></div>`
+          ).join('') +
+          `<div class="monthly-row"><span style="color:var(--text-2)">${prev.length} transaksi</span><span></span></div>`;
+
+        document.getElementById('monthly-summary-overlay').style.display = 'flex';
+      } catch (_) {}
+    }
+
+    function closeMonthlySummary() {
+      const now = new Date();
+      localStorage.setItem('catetu_last_summary_month',
+        `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);
+      const overlay = document.getElementById('monthly-summary-overlay');
+      if (overlay) overlay.style.display = 'none';
+    }
 
     function loadProfilSettings() {
       const nudgeTime = document.getElementById('nudge-time-input');
