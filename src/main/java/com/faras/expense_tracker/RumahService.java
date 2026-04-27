@@ -173,6 +173,30 @@ public class RumahService {
     }
 
     public List<ContributionMember> getContribution(Long userId, UUID rumahId) {
-        throw new UnsupportedOperationException("TODO");
+        Rumah rumah = rumahRepo.findById(rumahId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        assertMember(rumah, userId);
+
+        LocalDate start = LocalDate.now().withDayOfMonth(1);
+        LocalDate end = start.plusMonths(1).minusDays(1);
+
+        List<Object[]> rows = sharedExpRepo.sumByUserForPeriod(rumah, start, end);
+
+        Map<Long, Double> totals = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            User u = (User) row[0];
+            totals.put(u.getId(), ((Number) row[1]).doubleValue());
+        }
+        double grandTotal = totals.values().stream().mapToDouble(Double::doubleValue).sum();
+
+        return memberRepo.findByRumah(rumah).stream()
+                .sorted(Comparator.comparingDouble(m -> -totals.getOrDefault(m.getUser().getId(), 0.0)))
+                .map(m -> {
+                    User u = m.getUser();
+                    double amount = totals.getOrDefault(u.getId(), 0.0);
+                    int pct = grandTotal > 0 ? (int) Math.round(amount / grandTotal * 100) : 0;
+                    return new ContributionMember(u.getId(), u.getName(), u.getAvatarData(), amount, pct);
+                })
+                .toList();
     }
 }
