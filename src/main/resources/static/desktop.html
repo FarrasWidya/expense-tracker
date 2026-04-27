@@ -439,6 +439,7 @@ table.expense-table{width:100%;border-collapse:collapse;font-size:13px}
       <button class="nav-btn" data-view="catatan" onclick="navigate('catatan')"><span class="nav-icon">📋</span>Catatan</button>
       <button class="nav-btn" data-view="anggaran" onclick="navigate('anggaran')"><span class="nav-icon">💰</span>Anggaran</button>
       <button class="nav-btn" data-view="profil" onclick="navigate('profil')"><span class="nav-icon">👤</span>Profil</button>
+      <button class="nav-btn" data-view="rumah" onclick="navigate('rumah')">🏠 Rumah</button>
     </nav>
 
     <div id="catat-rail">
@@ -469,6 +470,59 @@ table.expense-table{width:100%;border-collapse:collapse;font-size:13px}
     <div id="view-profil" class="view hidden">
       <div class="view-title">Profil & Pengaturan</div>
       <!-- populated by JS -->
+    </div>
+    <div id="view-rumah" class="view hidden">
+      <div style="display:flex; gap:24px; align-items:flex-start">
+
+        <!-- Left: group card + contribution -->
+        <div style="width:260px; flex-shrink:0">
+          <div style="background:var(--surface-raised); border-radius:16px; padding:20px">
+            <div id="desktop-rumah-empty-state" style="text-align:center; padding:8px 0">
+              <div style="font-size:36px; margin-bottom:8px">🏠</div>
+              <p style="color:var(--text-muted); font-size:13px; margin-bottom:16px">Belum punya Rumah</p>
+              <button class="btn-primary" style="width:100%; margin-bottom:8px; font-size:13px" onclick="openDesktopBuatRumah()">Buat Rumah</button>
+              <button style="width:100%; font-size:13px; padding:10px; border:1px solid var(--border); border-radius:var(--radius); background:#fff" onclick="openDesktopGabung()">Gabung</button>
+            </div>
+            <div id="desktop-rumah-info-state" style="display:none">
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px">
+                <span id="desktop-rumah-emoji" style="font-size:24px">🏠</span>
+                <div>
+                  <div id="desktop-rumah-name" style="font-weight:700; font-size:15px"></div>
+                  <div id="desktop-rumah-member-count" style="font-size:12px; color:var(--text-muted)"></div>
+                </div>
+                <button onclick="desktopShareRumahLink()" style="margin-left:auto; background:none; border:none; cursor:pointer; font-size:18px" title="Salin link undangan">🔗</button>
+              </div>
+              <div style="font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:.5px; margin-bottom:10px">KONTRIBUSI BULAN INI</div>
+              <div id="desktop-contribution-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: shared feed table -->
+        <div style="flex:1; min-width:0">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
+            <h2 style="font-size:18px; font-weight:700">Catatan Bareng</h2>
+            <div id="desktop-bareng-toggle-area" style="display:none; align-items:center; gap:8px; font-size:13px; color:var(--text-muted)">
+              Bareng <input type="checkbox" id="desktop-bareng-checkbox" onchange="onDesktopBarengToggle()">
+            </div>
+          </div>
+          <div id="desktop-rumah-empty-feed" style="text-align:center; padding:48px; color:var(--text-muted); font-size:14px">
+            Belum ada catatan bareng bulan ini
+          </div>
+          <table id="desktop-rumah-table" style="display:none; width:100%; border-collapse:collapse">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border); font-size:12px; color:var(--text-muted); text-align:left">
+                <th style="padding:10px 8px; font-weight:600">Tanggal</th>
+                <th style="padding:10px 8px; font-weight:600">Oleh</th>
+                <th style="padding:10px 8px; font-weight:600">Kategori</th>
+                <th style="padding:10px 8px; font-weight:600">Catatan</th>
+                <th style="padding:10px 8px; font-weight:600; text-align:right">Jumlah</th>
+              </tr>
+            </thead>
+            <tbody id="desktop-rumah-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -677,6 +731,7 @@ function navigate(view) {
   if (view === 'catatan') loadCatatan();
   if (view === 'anggaran') loadAnggaran();
   if (view === 'profil') loadProfil();
+  if (view === 'rumah') loadDesktopRumah(); else stopDesktopRumahPolling();
 }
 
 // ── Anggaran ──
@@ -1482,7 +1537,10 @@ async function saveRail() {
   if (!amount || !category) return;
   const note = document.getElementById('rail-note').value;
   const today = new Date().toISOString().split('T')[0];
-  const r = await api('POST', '/expenses', {amount, category, note, date: today});
+  const url = desktopBarengActive && desktopCurrentRumah
+    ? '/rumah/' + desktopCurrentRumah.id + '/expenses'
+    : '/expenses';
+  const r = await api('POST', url, {amount, category, note, date: today});
   if (r && r.ok) {
     npState.rail.raw = '';
     npState.rail.cat = null;
@@ -1492,8 +1550,9 @@ async function saveRail() {
     const toast = document.getElementById('rail-toast');
     toast.style.opacity = '1';
     setTimeout(() => toast.style.opacity = '0', 2000);
-    if (currentView === 'beranda') loadBeranda();
-    if (currentView === 'catatan') loadCatatan();
+    if (desktopBarengActive && desktopCurrentRumah) loadDesktopRumahFeed(desktopCurrentRumah.id);
+    else if (currentView === 'beranda') loadBeranda();
+    else if (currentView === 'catatan') loadCatatan();
   }
 }
 
@@ -1539,12 +1598,127 @@ async function saveOverlay() {
   if (!amount || !category) return;
   const note = document.getElementById('overlay-note').value;
   const today = new Date().toISOString().split('T')[0];
-  const r = await api('POST', '/expenses', {amount, category, note, date: today});
+  const url = desktopBarengActive && desktopCurrentRumah
+    ? '/rumah/' + desktopCurrentRumah.id + '/expenses'
+    : '/expenses';
+  const r = await api('POST', url, {amount, category, note, date: today});
   if (r && r.ok) {
     closeOverlay();
-    if (currentView === 'beranda') loadBeranda();
-    if (currentView === 'catatan') loadCatatan();
+    if (desktopBarengActive && desktopCurrentRumah) loadDesktopRumahFeed(desktopCurrentRumah.id);
+    else if (currentView === 'beranda') loadBeranda();
+    else if (currentView === 'catatan') loadCatatan();
   }
+}
+
+// ─── Desktop Rumah ────────────────────────────────────────────────────────────
+
+let desktopCurrentRumah = null;
+let desktopRumahPollInterval = null;
+let desktopBarengActive = false;
+
+async function loadDesktopRumah() {
+  const r = await api('GET', '/rumah/me');
+  const data = r && r.ok ? await r.json() : null;
+  desktopCurrentRumah = data && data.id ? data : null;
+
+  const hasRumah = !!desktopCurrentRumah;
+  document.getElementById('desktop-rumah-empty-state').style.display = hasRumah ? 'none' : 'block';
+  document.getElementById('desktop-rumah-info-state').style.display = hasRumah ? 'block' : 'none';
+  document.getElementById('desktop-bareng-toggle-area').style.display = hasRumah ? 'flex' : 'none';
+  document.getElementById('desktop-rumah-empty-feed').style.display = 'block';
+  document.getElementById('desktop-rumah-table').style.display = 'none';
+
+  if (!hasRumah) return;
+
+  document.getElementById('desktop-rumah-emoji').textContent = desktopCurrentRumah.emoji || '🏠';
+  document.getElementById('desktop-rumah-name').textContent = desktopCurrentRumah.name;
+  document.getElementById('desktop-rumah-member-count').textContent =
+    (desktopCurrentRumah.members || []).length + ' anggota';
+
+  loadDesktopContribution(desktopCurrentRumah.id);
+  loadDesktopRumahFeed(desktopCurrentRumah.id);
+  startDesktopRumahPolling(desktopCurrentRumah.id);
+}
+
+async function loadDesktopContribution(rumahId) {
+  const r = await api('GET', '/rumah/' + rumahId + '/contribution');
+  if (!r || !r.ok) return;
+  const members = await r.json();
+  const el = document.getElementById('desktop-contribution-list');
+  if (!el) return;
+  el.innerHTML = members.map(m => `
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px">
+      <span style="width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0">${((m.name || '?')[0]).toUpperCase()}</span>
+      <div style="flex:1; min-width:0">
+        <div style="font-size:13px; font-weight:600">${(m.name || '?').split(' ')[0]}</div>
+        <div style="height:4px; background:var(--border); border-radius:4px; margin-top:3px">
+          <div style="height:4px; background:var(--accent); border-radius:4px; width:${m.pct}%; transition:width .3s"></div>
+        </div>
+      </div>
+      <span style="font-size:12px; font-weight:600; font-family:monospace; color:var(--text-muted)">${m.pct}%</span>
+    </div>
+  `).join('');
+}
+
+async function loadDesktopRumahFeed(rumahId) {
+  const r = await api('GET', '/rumah/' + rumahId + '/feed?page=0&size=50');
+  if (!r || !r.ok) return;
+  const page = await r.json();
+  const emptyEl = document.getElementById('desktop-rumah-empty-feed');
+  const tableEl = document.getElementById('desktop-rumah-table');
+  const tbody = document.getElementById('desktop-rumah-tbody');
+  if (!page.content || page.content.length === 0) {
+    emptyEl.style.display = 'block'; tableEl.style.display = 'none'; return;
+  }
+  emptyEl.style.display = 'none'; tableEl.style.display = 'table';
+  tbody.innerHTML = page.content.map(exp => `
+    <tr style="border-bottom:1px solid var(--border); font-size:14px">
+      <td style="padding:12px 8px; color:var(--text-muted)">${exp.date}</td>
+      <td style="padding:12px 8px; font-weight:500">${((exp.createdBy && exp.createdBy.name) || '?').split(' ')[0]}</td>
+      <td style="padding:12px 8px">${catEmoji(exp.category)} ${exp.category}</td>
+      <td style="padding:12px 8px; color:var(--text-muted)">${exp.note || '—'}</td>
+      <td style="padding:12px 8px; text-align:right; font-family:monospace; font-weight:600">${fmtRp(exp.amount)}</td>
+    </tr>
+  `).join('');
+}
+
+function startDesktopRumahPolling(rumahId) {
+  stopDesktopRumahPolling();
+  desktopRumahPollInterval = setInterval(() => {
+    if (!document.hidden && desktopCurrentRumah) loadDesktopRumahFeed(rumahId);
+  }, 30000);
+}
+
+function stopDesktopRumahPolling() {
+  if (desktopRumahPollInterval) { clearInterval(desktopRumahPollInterval); desktopRumahPollInterval = null; }
+}
+
+function onDesktopBarengToggle() {
+  desktopBarengActive = document.getElementById('desktop-bareng-checkbox')?.checked || false;
+}
+
+function desktopShareRumahLink() {
+  if (!desktopCurrentRumah) return;
+  const link = window.location.origin + '/join/' + desktopCurrentRumah.inviteToken;
+  navigator.clipboard.writeText(link).then(() => alert('Link undangan disalin!'));
+}
+
+async function openDesktopBuatRumah() {
+  const name = prompt('Nama Rumah:');
+  if (!name) return;
+  const emoji = prompt('Emoji (mis. 🏠):') || '🏠';
+  const r = await api('POST', '/rumah', { name, emoji, color: '#00897B' });
+  if (r && r.ok) { loadDesktopRumah(); }
+}
+
+async function openDesktopGabung() {
+  const raw = prompt('Tempel link atau kode undangan:');
+  if (!raw) return;
+  const match = raw.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+  if (!match) { alert('Link tidak valid'); return; }
+  const r = await api('POST', '/rumah/join/' + match[0]);
+  if (r && r.ok) loadDesktopRumah();
+  else alert('Gagal bergabung');
 }
 
 // ════════════════════════════════════════════════════
