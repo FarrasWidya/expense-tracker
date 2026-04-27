@@ -54,27 +54,81 @@ public class RumahService {
     }
 
     public RumahResponse createRumah(Long userId, String name, String emoji, String color) {
-        throw new UnsupportedOperationException("TODO");
+        if (memberRepo.findByUserId(userId).isPresent())
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Already in a Rumah");
+
+        User user = getUser(userId);
+        Rumah rumah = new Rumah();
+        rumah.setName(name);
+        rumah.setEmoji(emoji);
+        rumah.setColor(color);
+        rumah.setInviteToken(UUID.randomUUID());
+        rumah.setCreatedAt(LocalDateTime.now());
+        rumah.setAdmin(user);
+        rumahRepo.save(rumah);
+
+        RumahMember member = new RumahMember();
+        member.setRumah(rumah);
+        member.setUser(user);
+        member.setJoinedAt(LocalDateTime.now());
+        memberRepo.save(member);
+
+        return toResponse(rumah);
     }
 
     public Optional<RumahResponse> getMyRumah(Long userId) {
-        throw new UnsupportedOperationException("TODO");
+        return memberRepo.findByUserId(userId)
+                .map(m -> toResponse(m.getRumah()));
     }
 
     public PreviewResponse previewJoin(UUID token) {
-        throw new UnsupportedOperationException("TODO");
+        Rumah rumah = rumahRepo.findByInviteToken(token)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid invite link"));
+        int count = memberRepo.countByRumah(rumah);
+        return new PreviewResponse(rumah.getName(), rumah.getEmoji(), rumah.getColor(), count);
     }
 
     public RumahResponse joinRumah(Long userId, UUID token) {
-        throw new UnsupportedOperationException("TODO");
+        Rumah rumah = rumahRepo.findByInviteToken(token)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid invite link"));
+
+        if (memberRepo.findByUserId(userId).isPresent())
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Kamu sudah punya Rumah. Keluar dulu sebelum gabung");
+
+        if (memberRepo.countByRumah(rumah) >= 6)
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Rumah ini sudah penuh (6 anggota)");
+
+        User user = getUser(userId);
+        RumahMember member = new RumahMember();
+        member.setRumah(rumah);
+        member.setUser(user);
+        member.setJoinedAt(LocalDateTime.now());
+        memberRepo.save(member);
+
+        return toResponse(rumah);
     }
 
     public void leaveRumah(Long userId) {
-        throw new UnsupportedOperationException("TODO");
+        RumahMember membership = memberRepo.findByUserId(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not in a Rumah"));
+
+        if (membership.getRumah().getAdmin().getId().equals(userId))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Admin tidak bisa meninggalkan Rumah. Hapus Rumah untuk keluar.");
+
+        memberRepo.deleteByRumahAndUserId(membership.getRumah(), userId);
     }
 
     public void deleteRumah(Long userId, UUID rumahId) {
-        throw new UnsupportedOperationException("TODO");
+        Rumah rumah = rumahRepo.findById(rumahId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rumah not found"));
+
+        if (!rumah.getAdmin().getId().equals(userId))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admin can delete Rumah");
+
+        sharedExpRepo.deleteByRumah(rumah);
+        memberRepo.deleteByRumah(rumah);
+        rumahRepo.delete(rumah);
     }
 
     public SharedExpense addSharedExpense(Long userId, UUID rumahId, Double amount,
