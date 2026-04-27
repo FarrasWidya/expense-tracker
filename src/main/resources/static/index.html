@@ -653,6 +653,27 @@
       document.querySelector(`.insight-card[data-insight-id="${id}"]`)?.remove();
     }
 
+    function computeStreak(expenses) {
+      const dateSet = new Set(expenses.map(e => (e.date||'').substring(0,10)));
+      const now = new Date();
+      let streak = 0;
+      for (let i = 0; i < 365; i++) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        if (dateSet.has(d.toISOString().split('T')[0])) { streak++; } else { break; }
+      }
+      return streak;
+    }
+
+    function renderStreak(expenses) {
+      const badge = document.getElementById('streak-badge');
+      if (!badge) return;
+      const s = computeStreak(expenses);
+      if (s < 2) { badge.style.display = 'none'; return; }
+      badge.style.display = 'block';
+      badge.textContent = `📅 ${s} hari berturut-turut`;
+    }
+
     async function loadBeranda() {
       const { from, to } = monthRange();
       const { from: lf, to: lt } = monthRange(-1);
@@ -676,6 +697,7 @@
 
       const lastMonthTotal = lastMonth.reduce((s, e) => s + e.amount, 0);
       renderInsightCards(expenses, lastMonthTotal);
+      renderStreak(expenses);
 
       renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
     }
