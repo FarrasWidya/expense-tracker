@@ -653,6 +653,51 @@
       document.querySelector(`.insight-card[data-insight-id="${id}"]`)?.remove();
     }
 
+    async function checkWeeklyInsight() {
+      const weekKey = 'catetu_weekly_insight_week';
+      const cardKey = 'catetu_weekly_insight_card';
+      const dismissKey = 'catetu_weekly_card_dismissed_week';
+      const now = new Date();
+      const curWeek = isoWeek(now);
+      const wrap = document.getElementById('weekly-insight-wrap');
+      const textEl = document.getElementById('weekly-insight-text');
+      if (!wrap || !textEl) return;
+
+      if (localStorage.getItem(dismissKey) === curWeek) { wrap.style.display = 'none'; return; }
+
+      // Generate on Mondays when not yet generated this week
+      if (now.getDay() === 1 && localStorage.getItem(weekKey) !== curWeek) {
+        const end = now.toISOString().split('T')[0];
+        const startD = new Date(now); startD.setDate(startD.getDate() - 6);
+        const start = startD.toISOString().split('T')[0];
+        try {
+          const r = await authFetch(`/expenses?startDate=${start}&endDate=${end}`);
+          const exp = await r.json();
+          if (exp.length > 0) {
+            const totals = {};
+            exp.forEach(e => { totals[e.category] = (totals[e.category]||0)+e.amount; });
+            const [cat, amt] = Object.entries(totals).sort((a,b)=>b[1]-a[1])[0];
+            localStorage.setItem(cardKey, `Minggu lalu, ${CATS[cat]||'📦'} ${cat} jadi pengeluaran terbesar (${formatRp(amt)})`);
+            localStorage.setItem(weekKey, curWeek);
+          }
+        } catch (_) {}
+      }
+
+      const saved = localStorage.getItem(cardKey);
+      if (saved && localStorage.getItem(weekKey) === curWeek) {
+        textEl.textContent = saved;
+        wrap.style.display = 'block';
+      } else {
+        wrap.style.display = 'none';
+      }
+    }
+
+    function dismissWeeklyCard() {
+      localStorage.setItem('catetu_weekly_card_dismissed_week', isoWeek());
+      const wrap = document.getElementById('weekly-insight-wrap');
+      if (wrap) wrap.style.display = 'none';
+    }
+
     function computeStreak(expenses) {
       const dateSet = new Set(expenses.map(e => (e.date||'').substring(0,10)));
       const now = new Date();
@@ -698,6 +743,7 @@
       const lastMonthTotal = lastMonth.reduce((s, e) => s + e.amount, 0);
       renderInsightCards(expenses, lastMonthTotal);
       renderStreak(expenses);
+      checkWeeklyInsight();
 
       renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
     }
