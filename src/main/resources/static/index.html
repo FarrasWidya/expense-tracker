@@ -401,6 +401,25 @@
         </div>
       </div>
 
+      <div class="section-label">Pengaturan</div>
+      <div class="card">
+        <div class="settings-row">
+          <span style="font-size:14px">Pengingat harian</span>
+          <input type="time" id="nudge-time-input" value="21:00" onchange="saveNudgeSetting()" style="border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:4px 8px;font-size:13px">
+        </div>
+        <div class="settings-row" style="border-top:1px solid rgba(0,0,0,.05);padding-top:12px;margin-top:4px">
+          <span style="font-size:14px">Aktifkan pengingat</span>
+          <input type="checkbox" id="nudge-enabled-cb" onchange="saveNudgeSetting()" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer">
+        </div>
+        <div class="settings-row" style="border-top:1px solid rgba(0,0,0,.05);padding-top:12px;margin-top:4px">
+          <span style="font-size:14px">Tanggal gajian</span>
+          <input type="number" id="payday-date-input" min="1" max="31" placeholder="—" onchange="savePaydaySetting()" style="width:60px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:4px 8px;font-size:13px;text-align:center">
+        </div>
+        <div class="settings-row" style="border-top:1px solid rgba(0,0,0,.05);padding-top:12px;margin-top:4px">
+          <span style="font-size:14px">Mode Ramadan</span>
+          <input type="checkbox" id="ramadan-toggle-cb" onchange="saveRamadanSetting()" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer">
+        </div>
+      </div>
       <div class="section-label">Tentang</div>
       <div class="card">
         <div class="settings-row"><span>CatetU</span><span style="color:var(--text-2);font-size:13px">v0.3.0</span></div>
@@ -422,6 +441,22 @@
     </nav>
     <button id="fab">+</button>
 
+    <div id="nudge-toast">
+      <div class="toast-row">
+        <span style="font-size:14px">Udah catat pengeluaran hari ini? 📝</span>
+        <button onclick="closeNudgeToast()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-2);line-height:1">×</button>
+      </div>
+      <button onclick="openQuickAdd();closeNudgeToast()" style="width:100%;margin-top:10px;padding:10px;background:var(--accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer">Catat Sekarang</button>
+    </div>
+    <div id="monthly-summary-overlay" style="display:none" class="monthly-overlay">
+      <div class="monthly-sheet">
+        <h2 id="monthly-summary-title">Ringkasan Bulan Lalu</h2>
+        <div class="monthly-sub" id="monthly-summary-sub"></div>
+        <div class="monthly-total" id="monthly-summary-total"></div>
+        <div id="monthly-summary-rows"></div>
+        <button class="monthly-close" onclick="closeMonthlySummary()">Tutup</button>
+      </div>
+    </div>
     <div id="sheet-overlay"></div>
     <div id="quick-add-sheet">
       <div id="sheet-handle"></div>
@@ -744,6 +779,9 @@
       renderInsightCards(expenses, lastMonthTotal);
       renderStreak(expenses);
       checkWeeklyInsight();
+      const todayStr = today();
+      const todayCount = expenses.filter(e => (e.date||'').substring(0,10) === todayStr).length;
+      scheduleNudge(todayCount);
 
       renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
     }
@@ -1045,6 +1083,72 @@
     document.querySelector('.tab[data-screen="anggaran"]').addEventListener('click', loadAnggaran);
 
     // PROFIL
+    function scheduleNudge(todayCount) {
+      if (localStorage.getItem('catetu_nudge_enabled') === 'false') return;
+      const timeStr = localStorage.getItem('catetu_nudge_time') || '21:00';
+      const [hh, mm] = timeStr.split(':').map(Number);
+      const now = new Date();
+      const fireAt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
+      const msUntil = fireAt - now;
+      if (msUntil <= 0) return;
+      setTimeout(async () => {
+        try {
+          const t = today();
+          const r = await authFetch(`/expenses?startDate=${t}&endDate=${t}`);
+          const exp = await r.json();
+          if (exp.length === 0) showNudgeToast();
+        } catch (_) { if (todayCount === 0) showNudgeToast(); }
+      }, msUntil);
+    }
+
+    function showNudgeToast() {
+      const toast = document.getElementById('nudge-toast');
+      if (toast) toast.style.display = 'block';
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification('CatetU', { body: 'Udah catat pengeluaran hari ini? 📝' });
+        } else if (Notification.permission === 'default') {
+          Notification.requestPermission().then(p => {
+            if (p === 'granted') new Notification('CatetU', { body: 'Udah catat pengeluaran hari ini? 📝' });
+          });
+        }
+      }
+      setTimeout(closeNudgeToast, 8000);
+    }
+
+    function closeNudgeToast() {
+      const toast = document.getElementById('nudge-toast');
+      if (toast) toast.style.display = 'none';
+    }
+
+    function openQuickAdd() { document.getElementById('fab')?.click(); }
+
+    function loadProfilSettings() {
+      const nudgeTime = document.getElementById('nudge-time-input');
+      if (nudgeTime) nudgeTime.value = localStorage.getItem('catetu_nudge_time') || '21:00';
+      const nudgeEnabled = document.getElementById('nudge-enabled-cb');
+      if (nudgeEnabled) nudgeEnabled.checked = localStorage.getItem('catetu_nudge_enabled') !== 'false';
+      const paydayInput = document.getElementById('payday-date-input');
+      if (paydayInput) paydayInput.value = localStorage.getItem('catetu_payday_date') || '';
+      const ramadanCb = document.getElementById('ramadan-toggle-cb');
+      if (ramadanCb) ramadanCb.checked = localStorage.getItem('catetu_ramadan_mode') === 'true';
+    }
+    function saveNudgeSetting() {
+      const t = document.getElementById('nudge-time-input')?.value || '21:00';
+      const en = document.getElementById('nudge-enabled-cb')?.checked !== false;
+      localStorage.setItem('catetu_nudge_time', t);
+      localStorage.setItem('catetu_nudge_enabled', String(en));
+    }
+    function savePaydaySetting() {
+      const v = document.getElementById('payday-date-input')?.value;
+      if (v) localStorage.setItem('catetu_payday_date', v); else localStorage.removeItem('catetu_payday_date');
+    }
+    function saveRamadanSetting() {
+      const on = document.getElementById('ramadan-toggle-cb')?.checked === true;
+      localStorage.setItem('catetu_ramadan_mode', String(on));
+      renderCatPills();
+    }
+
     async function loadProfil() {
       try {
         const res = await authFetch('/auth/me');
@@ -1053,6 +1157,7 @@
         document.getElementById('profil-email').textContent = email;
         document.getElementById('profil-avatar').textContent = email.split('@')[0].slice(0, 2).toUpperCase();
       } catch (_) {}
+      loadProfilSettings();
     }
 
     function applyTheme(theme) {
