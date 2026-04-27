@@ -783,6 +783,7 @@
       const todayCount = expenses.filter(e => (e.date||'').substring(0,10) === todayStr).length;
       scheduleNudge(todayCount);
       checkMonthlySummary();
+      checkPaydayBanner();
 
       renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
     }
@@ -1123,6 +1124,37 @@
     }
 
     function openQuickAdd() { document.getElementById('fab')?.click(); }
+
+    function checkPaydayBanner() {
+      const paydayDate = parseInt(localStorage.getItem('catetu_payday_date'), 10);
+      const banner = document.getElementById('payday-banner');
+      if (!banner) return;
+      if (!paydayDate || isNaN(paydayDate)) { banner.style.display = 'none'; return; }
+
+      const now = new Date();
+      const payday = new Date(now.getFullYear(), now.getMonth(), paydayDate);
+      const diff = Math.round((now - payday) / 86400000);
+
+      if (Math.abs(diff) > 3) { banner.style.display = 'none'; return; }
+
+      const dismissKey = 'catetu_payday_dismissed_month';
+      const curMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      if (localStorage.getItem(dismissKey) === curMonth) { banner.style.display = 'none'; return; }
+
+      banner.style.display = 'flex';
+      // Add dismiss button once
+      if (!banner.dataset.dismissAdded) {
+        banner.dataset.dismissAdded = '1';
+        const btn = document.createElement('button');
+        btn.textContent = '×';
+        btn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-2);flex-shrink:0';
+        btn.addEventListener('click', () => {
+          localStorage.setItem(dismissKey, curMonth);
+          banner.style.display = 'none';
+        });
+        banner.appendChild(btn);
+      }
+    }
 
     async function checkMonthlySummary() {
       const now = new Date();
