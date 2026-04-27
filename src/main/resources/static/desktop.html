@@ -500,6 +500,16 @@ table.expense-table{width:100%;border-collapse:collapse;font-size:13px}
 <!-- ═══════════════════════ SLIDE-OVER ═══════════════════════ -->
 <div id="slide-over"></div>
 
+<div id="monthly-modal-d" style="display:none" class="monthly-overlay-d">
+  <div class="monthly-card-d">
+    <h2 id="monthly-title-d">Ringkasan Bulan Lalu</h2>
+    <div class="m-sub" id="monthly-sub-d"></div>
+    <div class="m-total" id="monthly-total-d"></div>
+    <div id="monthly-rows-d"></div>
+    <button class="m-close" onclick="closeMonthlySummaryD()">Tutup</button>
+  </div>
+</div>
+
 <script>
 // ════════════════════════════════════════════════════
 //  CONFIG & STATE
@@ -809,6 +819,18 @@ async function loadProfil() {
       </div>
     </div>
     <div class="profil-section">
+      <h3>Preferensi</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
+        <span style="font-size:14px">Mode Ramadan</span>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="ramadan-toggle-d" ${isRamadanActiveD() ? 'checked' : ''}
+            onchange="toggleRamadanD(this.checked)"
+            style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+          <span style="font-size:13px;color:var(--text-muted)">Ganti label kategori untuk Ramadan</span>
+        </label>
+      </div>
+    </div>
+    <div class="profil-section">
       <h3>Sesi</h3>
       <button class="logout-btn" onclick="if(confirm('Keluar dari akun?'))logout()">Keluar</button>
     </div>`;
@@ -1067,6 +1089,101 @@ async function deleteFromSlideOver() {
   if (r && r.ok) { closeSlideOver(); await loadCatatan(); }
 }
 
+// ── Phase 5: Monthly Summary (desktop) ──
+async function checkMonthlySummaryD() {
+  const now = new Date();
+  if (now.getDate() > 3) return;
+  const curMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  if (localStorage.getItem('catetu_last_summary_month') === curMonth) return;
+
+  const firstPrev = `${now.getFullYear()}-${String(now.getMonth()).padStart(2,'0')}-01`;
+  const lastPrev = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+  const firstPP = `${now.getFullYear()}-${String(now.getMonth()-1 < 1 ? 12 : now.getMonth()-1).padStart(2,'0')}-01`;
+  const ppYear = now.getMonth() < 2 ? now.getFullYear()-1 : now.getFullYear();
+  const lastPP = new Date(ppYear, now.getMonth()-1, 0).toISOString().split('T')[0];
+
+  try {
+    const [r1, r2] = await Promise.all([
+      api('GET', `/expenses?startDate=${firstPrev}&endDate=${lastPrev}`),
+      api('GET', `/expenses?startDate=${firstPP}&endDate=${lastPP}`),
+    ]);
+    if (!r1 || !r2) return;
+    const prev = await r1.json();
+    const prevPrev = await r2.json();
+    if (prev.length === 0) return;
+
+    const total = prev.reduce((s, e) => s + e.amount, 0);
+    const totalPP = prevPrev.reduce((s, e) => s + e.amount, 0);
+    const pct = totalPP > 0 ? Math.round((total / totalPP) * 100) : null;
+    const pctLabel = pct !== null
+      ? (pct < 100 ? `↓ hemat ${100-pct}% dari sebelumnya` : `↑ ${pct-100}% dari sebelumnya`)
+      : '';
+
+    const catTotals = {};
+    prev.forEach(e => { catTotals[e.category] = (catTotals[e.category]||0)+e.amount; });
+    const top3 = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+    const prevDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const mLabel = prevDate.toLocaleDateString('id-ID', {month:'long', year:'numeric'});
+
+    document.getElementById('monthly-title-d').textContent = `Ringkasan ${mLabel}`;
+    document.getElementById('monthly-sub-d').textContent = pctLabel;
+    document.getElementById('monthly-total-d').textContent = fmtRp(total);
+    document.getElementById('monthly-rows-d').innerHTML =
+      top3.map(([cat, amt]) =>
+        `<div class="m-row"><span>${catEmoji(cat)} ${cat}</span><span>${fmtRp(amt)}</span></div>`
+      ).join('') +
+      `<div class="m-row"><span style="color:var(--text-muted)">${prev.length} transaksi</span><span></span></div>`;
+
+    document.getElementById('monthly-modal-d').style.display = 'flex';
+  } catch (_) {}
+}
+
+function closeMonthlySummaryD() {
+  const now = new Date();
+  localStorage.setItem('catetu_last_summary_month',
+    `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);
+  const modal = document.getElementById('monthly-modal-d');
+  if (modal) modal.style.display = 'none';
+}
+
+// ── Phase 5: Ramadan Mode (desktop) ──
+const RAMADAN_RANGES_D = [
+  { year: 2026, start: new Date('2026-02-18T00:00:00'), end: new Date('2026-03-19T23:59:59') },
+  { year: 2027, start: new Date('2027-02-07T00:00:00'), end: new Date('2027-03-08T23:59:59') },
+  { year: 2028, start: new Date('2028-01-27T00:00:00'), end: new Date('2028-02-25T23:59:59') },
+];
+
+function getRamadanWindowD(now = new Date()) {
+  const lead = 14 * 86400000;
+  return RAMADAN_RANGES_D.find(r => now >= new Date(r.start.getTime()-lead) && now <= r.end) || null;
+}
+
+function isRamadanActiveD() { return localStorage.getItem('catetu_ramadan_mode') === 'true'; }
+
+function getDisplayLabelD(label) {
+  if (!isRamadanActiveD()) return label;
+  const map = { 'Makan & Minum': 'Sahur & Berbuka', 'Sedekah & Sosial': 'Zakat & Infaq' };
+  return map[label] || label;
+}
+
+function getRamadanBannerHtml() {
+  if (!isRamadanActiveD()) return '';
+  const now = new Date();
+  const range = RAMADAN_RANGES_D.find(r => now >= r.start && now <= r.end);
+  if (!range) return '';
+  return `<div class="ramadan-banner-d">
+    <span>🌙 Mode Ramadan aktif — kategori ditampilkan dalam konteks Ramadan</span>
+    <button onclick="toggleRamadanD(false)" style="font-size:12px;color:var(--text-muted);background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer">Nonaktifkan</button>
+  </div>`;
+}
+
+function toggleRamadanD(on) {
+  localStorage.setItem('catetu_ramadan_mode', String(on));
+  if (currentView === 'beranda') loadBeranda();
+  if (currentView === 'catatan') loadCatatan();
+}
+
 // ── Phase 5: Insight Engine (desktop) ──
 function isoWeek(date = new Date()) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -1224,6 +1341,7 @@ async function loadBeranda() {
   view.innerHTML = `
     <div class="view-title">Beranda</div>
     <div class="view-subtitle" id="beranda-month">${monthLabel}</div>
+    ${getRamadanBannerHtml()}
     ${weeklyHtml}
     ${insightRowHtml}
     <div class="stat-grid">
@@ -1257,6 +1375,8 @@ async function loadBeranda() {
         ? '<div class="empty-state">Belum ada catatan bulan ini.</div>'
         : recent.map(e => expenseRow(e)).join('')}
     </div>`;
+
+  checkMonthlySummaryD();
 }
 
 function filterCatalanByCategory(cat) {
@@ -1335,7 +1455,7 @@ function buildCatPills(scope, containerId) {
   container.innerHTML = '';
   CATEGORIES.forEach(c => {
     const pill = document.createElement('button');
-    pill.textContent = c.emoji + ' ' + c.label;
+    pill.textContent = c.emoji + ' ' + getDisplayLabelD(c.label);
     pill.className = 'cat-pill';
     pill.onclick = () => selectCat(scope, c.label, containerId,
       scope === 'rail' ? 'rail-save-btn' : 'overlay-save-btn',
