@@ -234,6 +234,29 @@
       border: 1.5px solid var(--border); background: none; color: var(--text);
     }
     .theme-btn.active { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+    /* ── Phase 5: Depth & Delight ── */
+    #streak-badge { padding: 4px 16px 2px; font-size: 12px; color: var(--text-2); }
+    .insight-row { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 4px; scrollbar-width: none; }
+    .insight-row::-webkit-scrollbar { display: none; }
+    .insight-card { flex: 0 0 calc(100% - 40px); background: var(--card-bg, #fff); border: 1px solid rgba(0,0,0,.07); border-radius: 12px; padding: 14px 34px 14px 14px; position: relative; font-size: 13px; line-height: 1.5; color: var(--text-1); box-shadow: 0 1px 4px rgba(0,0,0,.04); }
+    .insight-dismiss { position: absolute; top: 8px; right: 10px; background: none; border: none; cursor: pointer; color: var(--text-2); font-size: 18px; line-height: 1; padding: 2px 4px; }
+    #weekly-insight-wrap { display: none; padding: 0 16px 8px; }
+    .weekly-card { background: var(--accent); border-radius: 12px; padding: 14px 34px 14px 14px; font-size: 13px; color: #fff; line-height: 1.5; position: relative; }
+    .weekly-card .insight-dismiss { color: rgba(255,255,255,.75); }
+    #payday-banner { display: none; margin: 0 16px 8px; background: #E0F2F1; border-radius: 12px; padding: 12px 14px; flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
+    #ramadan-suggestion { display: none; margin: 0 16px 8px; background: #FFF8E7; border: 1px solid #F59E0B; border-radius: 12px; padding: 14px; font-size: 13px; }
+    .ramadan-btns { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-ramadan-on { background: var(--accent); color: #fff; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; }
+    .btn-ramadan-off { background: none; border: 1px solid var(--text-2); border-radius: 8px; padding: 8px 14px; font-size: 13px; color: var(--text-2); cursor: pointer; }
+    #nudge-toast { position: fixed; bottom: 90px; left: 16px; right: 16px; background: #fff; border: 1px solid rgba(0,0,0,.09); border-radius: 14px; padding: 14px 16px; box-shadow: 0 4px 24px rgba(0,0,0,.13); display: none; z-index: 999; }
+    #nudge-toast .toast-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .monthly-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; display: flex; align-items: flex-end; }
+    .monthly-sheet { background: #fff; border-radius: 20px 20px 0 0; padding: 24px 20px 32px; width: 100%; }
+    .monthly-sheet h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .monthly-sub { font-size: 13px; color: var(--text-2); margin-bottom: 20px; }
+    .monthly-total { font-family: var(--mono); font-size: 28px; font-weight: 700; margin: 8px 0 16px; }
+    .monthly-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,.06); font-size: 14px; }
+    .monthly-close { width: 100%; padding: 14px; background: var(--accent); color: #fff; border-radius: 10px; font-weight: 600; font-size: 15px; margin-top: 20px; border: none; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -271,9 +294,25 @@
         <div id="beranda-total" style="font-family:var(--mono);font-size:36px;font-weight:700;letter-spacing:-1px">Rp 0</div>
         <div id="beranda-compare" style="display:none;margin-top:6px;font-size:13px;color:var(--text-2)"></div>
       </div>
-      <div id="beranda-insight" class="card" style="padding:14px 16px;display:none">
-        <div id="beranda-insight-text" style="font-size:13px;color:var(--text-2)"></div>
+      <div id="streak-badge"></div>
+      <div id="weekly-insight-wrap">
+        <div class="weekly-card">
+          <span id="weekly-insight-text"></span>
+          <button class="insight-dismiss" onclick="dismissWeeklyCard()">×</button>
+        </div>
       </div>
+      <div id="ramadan-suggestion" class="ramadan-suggestion">
+        <div>🌙 Ramadan sebentar lagi — aktifkan Mode Ramadan?</div>
+        <div class="ramadan-btns">
+          <button class="btn-ramadan-on" onclick="activateRamadan()">Aktifkan</button>
+          <button class="btn-ramadan-off" onclick="dismissRamadanSuggestion()">Nanti saja</button>
+        </div>
+      </div>
+      <div id="payday-banner">
+        <span style="font-size:13px">Gajian nih — yuk rencanain bulannya 💸</span>
+        <button onclick="showScreen('anggaran')" style="font-size:12px;font-weight:600;color:var(--accent);background:none;border:none;cursor:pointer">Atur Anggaran →</button>
+      </div>
+      <div id="insight-cards" class="insight-row"></div>
       <div class="section-label">Pengeluaran Terbaru</div>
       <div id="beranda-list"></div>
       <p id="beranda-empty" style="text-align:center;padding:40px 20px;color:var(--text-2);font-size:14px;display:none">
@@ -362,6 +401,25 @@
         </div>
       </div>
 
+      <div class="section-label">Pengaturan</div>
+      <div class="card">
+        <div class="settings-row">
+          <span style="font-size:14px">Pengingat harian</span>
+          <input type="time" id="nudge-time-input" value="21:00" onchange="saveNudgeSetting()" style="border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:4px 8px;font-size:13px">
+        </div>
+        <div class="settings-row" style="border-top:1px solid rgba(0,0,0,.05);padding-top:12px;margin-top:4px">
+          <span style="font-size:14px">Aktifkan pengingat</span>
+          <input type="checkbox" id="nudge-enabled-cb" onchange="saveNudgeSetting()" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer">
+        </div>
+        <div class="settings-row" style="border-top:1px solid rgba(0,0,0,.05);padding-top:12px;margin-top:4px">
+          <span style="font-size:14px">Tanggal gajian</span>
+          <input type="number" id="payday-date-input" min="1" max="31" placeholder="—" onchange="savePaydaySetting()" style="width:60px;border:1px solid rgba(0,0,0,.12);border-radius:6px;padding:4px 8px;font-size:13px;text-align:center">
+        </div>
+        <div class="settings-row" style="border-top:1px solid rgba(0,0,0,.05);padding-top:12px;margin-top:4px">
+          <span style="font-size:14px">Mode Ramadan</span>
+          <input type="checkbox" id="ramadan-toggle-cb" onchange="saveRamadanSetting()" style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer">
+        </div>
+      </div>
       <div class="section-label">Tentang</div>
       <div class="card">
         <div class="settings-row"><span>CatetU</span><span style="color:var(--text-2);font-size:13px">v0.3.0</span></div>
@@ -383,6 +441,22 @@
     </nav>
     <button id="fab">+</button>
 
+    <div id="nudge-toast">
+      <div class="toast-row">
+        <span style="font-size:14px">Udah catat pengeluaran hari ini? 📝</span>
+        <button onclick="closeNudgeToast()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-2);line-height:1">×</button>
+      </div>
+      <button onclick="openQuickAdd();closeNudgeToast()" style="width:100%;margin-top:10px;padding:10px;background:var(--accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600;border:none;cursor:pointer">Catat Sekarang</button>
+    </div>
+    <div id="monthly-summary-overlay" style="display:none" class="monthly-overlay">
+      <div class="monthly-sheet">
+        <h2 id="monthly-summary-title">Ringkasan Bulan Lalu</h2>
+        <div class="monthly-sub" id="monthly-summary-sub"></div>
+        <div class="monthly-total" id="monthly-summary-total"></div>
+        <div id="monthly-summary-rows"></div>
+        <button class="monthly-close" onclick="closeMonthlySummary()">Tutup</button>
+      </div>
+    </div>
     <div id="sheet-overlay"></div>
     <div id="quick-add-sheet">
       <div id="sheet-handle"></div>
@@ -517,6 +591,169 @@
       return { from, to };
     }
 
+    // ── Phase 5: Insight Engine ──
+    function isoWeek(date = new Date()) {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const day = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - day);
+      const y = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      return `${d.getUTCFullYear()}-W${String(Math.ceil((((d - y) / 86400000) + 1) / 7)).padStart(2, '0')}`;
+    }
+
+    function getDismissed() { return JSON.parse(localStorage.getItem('catetu_dismissed_insights') || '[]'); }
+    function addDismissed(id) {
+      const d = getDismissed();
+      if (!d.includes(id)) d.push(id);
+      localStorage.setItem('catetu_dismissed_insights', JSON.stringify(d));
+    }
+    function maybeClearMonthlyDismissals() {
+      const key = 'catetu_dismissed_insights_month';
+      const now = new Date();
+      const cur = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      if (now.getDate() === 1 && localStorage.getItem(key) !== cur) {
+        localStorage.removeItem('catetu_dismissed_insights');
+        localStorage.setItem(key, cur);
+      }
+    }
+
+    function computeInsights(expenses, lastMonthTotal) {
+      maybeClearMonthlyDismissals();
+      const dismissed = getDismissed();
+      const now = new Date();
+      const daysElapsed = Math.max(now.getDate(), 1);
+      const results = [];
+
+      if (!expenses || expenses.length === 0) return results;
+
+      // top-category
+      if (!dismissed.includes('top-category')) {
+        const totals = {};
+        expenses.forEach(e => { totals[e.category] = (totals[e.category]||0) + e.amount; });
+        const [cat, amt] = Object.entries(totals).sort((a,b) => b[1]-a[1])[0];
+        results.push({ id: 'top-category', text: `Pengeluaran terbesar bulan ini: ${CATS[cat]||'📦'} ${cat} — ${formatRp(amt)}` });
+      }
+
+      // savings-vs-last (only when spending less than last month)
+      if (!dismissed.includes('savings-vs-last') && lastMonthTotal > 0) {
+        const thisTotal = expenses.reduce((s, e) => s + e.amount, 0);
+        const pct = Math.round((thisTotal / lastMonthTotal) * 100);
+        if (pct < 100) {
+          results.push({ id: 'savings-vs-last', text: `Kamu udah hemat ${100 - pct}% dibanding bulan lalu 🎉` });
+        }
+      }
+
+      // busiest-day
+      if (!dismissed.includes('busiest-day') && expenses.length >= 3) {
+        const byDay = {};
+        expenses.forEach(e => { const d = (e.date||'').substring(0,10); byDay[d] = (byDay[d]||0)+1; });
+        const [day, count] = Object.entries(byDay).sort((a,b) => b[1]-a[1])[0];
+        if (count >= 3) {
+          const label = new Date(day + 'T00:00:00').toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'short'});
+          results.push({ id: 'busiest-day', text: `Hari tersibuk: ${label} — ${count} transaksi` });
+        }
+      }
+
+      // daily-avg
+      if (!dismissed.includes('daily-avg')) {
+        const avg = Math.round(expenses.reduce((s,e)=>s+e.amount,0) / daysElapsed);
+        results.push({ id: 'daily-avg', text: `Rata-rata harian bulan ini: ${formatRp(avg)}` });
+      }
+
+      // top-frequency
+      if (!dismissed.includes('top-frequency') && expenses.length >= 5) {
+        const freq = {};
+        expenses.forEach(e => { freq[e.category] = (freq[e.category]||0)+1; });
+        const [cat, n] = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
+        if (n >= 3) results.push({ id: 'top-frequency', text: `Paling sering: ${CATS[cat]||'📦'} ${cat} (${n}x bulan ini)` });
+      }
+
+      return results.slice(0, 3);
+    }
+
+    function renderInsightCards(expenses, lastMonthTotal) {
+      const container = document.getElementById('insight-cards');
+      if (!container) return;
+      const cards = computeInsights(expenses, lastMonthTotal);
+      if (!cards.length) { container.innerHTML = ''; return; }
+      container.innerHTML = cards.map(c =>
+        `<div class="insight-card" data-insight-id="${c.id}">
+          ${escHtml(c.text)}
+          <button class="insight-dismiss" onclick="dismissInsight('${c.id}')">×</button>
+        </div>`
+      ).join('');
+    }
+
+    function dismissInsight(id) {
+      addDismissed(id);
+      document.querySelector(`.insight-card[data-insight-id="${id}"]`)?.remove();
+    }
+
+    async function checkWeeklyInsight() {
+      const weekKey = 'catetu_weekly_insight_week';
+      const cardKey = 'catetu_weekly_insight_card';
+      const dismissKey = 'catetu_weekly_card_dismissed_week';
+      const now = new Date();
+      const curWeek = isoWeek(now);
+      const wrap = document.getElementById('weekly-insight-wrap');
+      const textEl = document.getElementById('weekly-insight-text');
+      if (!wrap || !textEl) return;
+
+      if (localStorage.getItem(dismissKey) === curWeek) { wrap.style.display = 'none'; return; }
+
+      // Generate on Mondays when not yet generated this week
+      if (now.getDay() === 1 && localStorage.getItem(weekKey) !== curWeek) {
+        const end = now.toISOString().split('T')[0];
+        const startD = new Date(now); startD.setDate(startD.getDate() - 6);
+        const start = startD.toISOString().split('T')[0];
+        try {
+          const r = await authFetch(`/expenses?startDate=${start}&endDate=${end}`);
+          const exp = await r.json();
+          if (exp.length > 0) {
+            const totals = {};
+            exp.forEach(e => { totals[e.category] = (totals[e.category]||0)+e.amount; });
+            const [cat, amt] = Object.entries(totals).sort((a,b)=>b[1]-a[1])[0];
+            localStorage.setItem(cardKey, `Minggu lalu, ${CATS[cat]||'📦'} ${cat} jadi pengeluaran terbesar (${formatRp(amt)})`);
+            localStorage.setItem(weekKey, curWeek);
+          }
+        } catch (_) {}
+      }
+
+      const saved = localStorage.getItem(cardKey);
+      if (saved && localStorage.getItem(weekKey) === curWeek) {
+        textEl.textContent = saved;
+        wrap.style.display = 'block';
+      } else {
+        wrap.style.display = 'none';
+      }
+    }
+
+    function dismissWeeklyCard() {
+      localStorage.setItem('catetu_weekly_card_dismissed_week', isoWeek());
+      const wrap = document.getElementById('weekly-insight-wrap');
+      if (wrap) wrap.style.display = 'none';
+    }
+
+    function computeStreak(expenses) {
+      const dateSet = new Set(expenses.map(e => (e.date||'').substring(0,10)));
+      const now = new Date();
+      let streak = 0;
+      for (let i = 0; i < 365; i++) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        if (dateSet.has(d.toISOString().split('T')[0])) { streak++; } else { break; }
+      }
+      return streak;
+    }
+
+    function renderStreak(expenses) {
+      const badge = document.getElementById('streak-badge');
+      if (!badge) return;
+      const s = computeStreak(expenses);
+      if (s < 2) { badge.style.display = 'none'; return; }
+      badge.style.display = 'block';
+      badge.textContent = `📅 ${s} hari berturut-turut`;
+    }
+
     async function loadBeranda() {
       const { from, to } = monthRange();
       const { from: lf, to: lt } = monthRange(-1);
@@ -538,14 +775,16 @@
         cmp.style.display = 'block';
       }
 
-      if (expenses.length >= 3) {
-        const totals = {};
-        expenses.forEach(e => { totals[e.category] = (totals[e.category] || 0) + e.amount; });
-        const [topCat, topAmt] = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
-        document.getElementById('beranda-insight-text').textContent =
-          `${CATS[topCat] || '📦'} ${topCat} jadi pengeluaran terbesar bulan ini (${formatRp(topAmt)})`;
-        document.getElementById('beranda-insight').style.display = 'block';
-      }
+      const lastMonthTotal = lastMonth.reduce((s, e) => s + e.amount, 0);
+      renderInsightCards(expenses, lastMonthTotal);
+      renderStreak(expenses);
+      checkWeeklyInsight();
+      const todayStr = today();
+      const todayCount = expenses.filter(e => (e.date||'').substring(0,10) === todayStr).length;
+      scheduleNudge(todayCount);
+      checkMonthlySummary();
+      checkPaydayBanner();
+      checkRamadanSuggestion();
 
       renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
     }
@@ -589,7 +828,7 @@
 
     function renderCatPills() {
       document.getElementById('sheet-cats').innerHTML = CATEGORY_LIST.map(c =>
-        `<button class="cat-pill${c.label === sheetCat ? ' selected' : ''}" data-cat="${escHtml(c.label)}">${c.emoji} ${escHtml(c.label)}</button>`
+        `<button class="cat-pill${c.label === sheetCat ? ' selected' : ''}" data-cat="${escHtml(c.label)}">${c.emoji} ${escHtml(getDisplayLabel(c.label))}</button>`
       ).join('');
       document.querySelectorAll('.cat-pill').forEach(btn =>
         btn.addEventListener('click', () => { sheetCat = btn.dataset.cat; renderCatPills(); })
@@ -847,6 +1086,204 @@
     document.querySelector('.tab[data-screen="anggaran"]').addEventListener('click', loadAnggaran);
 
     // PROFIL
+    function scheduleNudge(todayCount) {
+      if (localStorage.getItem('catetu_nudge_enabled') === 'false') return;
+      const timeStr = localStorage.getItem('catetu_nudge_time') || '21:00';
+      const [hh, mm] = timeStr.split(':').map(Number);
+      const now = new Date();
+      const fireAt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
+      const msUntil = fireAt - now;
+      if (msUntil <= 0) return;
+      setTimeout(async () => {
+        try {
+          const t = today();
+          const r = await authFetch(`/expenses?startDate=${t}&endDate=${t}`);
+          const exp = await r.json();
+          if (exp.length === 0) showNudgeToast();
+        } catch (_) { if (todayCount === 0) showNudgeToast(); }
+      }, msUntil);
+    }
+
+    function showNudgeToast() {
+      const toast = document.getElementById('nudge-toast');
+      if (toast) toast.style.display = 'block';
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          new Notification('CatetU', { body: 'Udah catat pengeluaran hari ini? 📝' });
+        } else if (Notification.permission === 'default') {
+          Notification.requestPermission().then(p => {
+            if (p === 'granted') new Notification('CatetU', { body: 'Udah catat pengeluaran hari ini? 📝' });
+          });
+        }
+      }
+      setTimeout(closeNudgeToast, 8000);
+    }
+
+    function closeNudgeToast() {
+      const toast = document.getElementById('nudge-toast');
+      if (toast) toast.style.display = 'none';
+    }
+
+    function openQuickAdd() { document.getElementById('fab')?.click(); }
+
+    const RAMADAN_RANGES = [
+      { year: 2026, start: new Date('2026-02-18T00:00:00'), end: new Date('2026-03-19T23:59:59') },
+      { year: 2027, start: new Date('2027-02-07T00:00:00'), end: new Date('2027-03-08T23:59:59') },
+      { year: 2028, start: new Date('2028-01-27T00:00:00'), end: new Date('2028-02-25T23:59:59') },
+    ];
+
+    function getCurrentRamadanWindow(now = new Date()) {
+      const leadUpMs = 14 * 86400000;
+      return RAMADAN_RANGES.find(r => now >= new Date(r.start.getTime() - leadUpMs) && now <= r.end) || null;
+    }
+
+    function isRamadanActive() { return localStorage.getItem('catetu_ramadan_mode') === 'true'; }
+
+    function getDisplayLabel(label) {
+      if (!isRamadanActive()) return label;
+      const map = { 'Makan & Minum': 'Sahur & Berbuka', 'Sedekah & Sosial': 'Zakat & Infaq' };
+      return map[label] || label;
+    }
+
+    function checkRamadanSuggestion() {
+      const now = new Date();
+      const range = getCurrentRamadanWindow(now);
+      if (!range) return;
+      if (now >= range.start) return; // in Ramadan already, suggestion no longer needed
+      if (isRamadanActive()) return;
+      const key = `catetu_ramadan_suggestion_${range.year}`;
+      if (localStorage.getItem(key)) return;
+      const el = document.getElementById('ramadan-suggestion');
+      if (el) el.style.display = 'block';
+    }
+
+    function activateRamadan() {
+      const range = getCurrentRamadanWindow();
+      if (range) localStorage.setItem(`catetu_ramadan_suggestion_${range.year}`, 'shown');
+      localStorage.setItem('catetu_ramadan_mode', 'true');
+      const el = document.getElementById('ramadan-suggestion');
+      if (el) el.style.display = 'none';
+      const cb = document.getElementById('ramadan-toggle-cb');
+      if (cb) cb.checked = true;
+      renderCatPills();
+    }
+
+    function dismissRamadanSuggestion() {
+      const range = getCurrentRamadanWindow();
+      if (range) localStorage.setItem(`catetu_ramadan_suggestion_${range.year}`, 'shown');
+      const el = document.getElementById('ramadan-suggestion');
+      if (el) el.style.display = 'none';
+    }
+
+    function checkPaydayBanner() {
+      const paydayDate = parseInt(localStorage.getItem('catetu_payday_date'), 10);
+      const banner = document.getElementById('payday-banner');
+      if (!banner) return;
+      if (!paydayDate || isNaN(paydayDate)) { banner.style.display = 'none'; return; }
+
+      const now = new Date();
+      const payday = new Date(now.getFullYear(), now.getMonth(), paydayDate);
+      const diff = Math.round((now - payday) / 86400000);
+
+      if (Math.abs(diff) > 3) { banner.style.display = 'none'; return; }
+
+      const dismissKey = 'catetu_payday_dismissed_month';
+      const curMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      if (localStorage.getItem(dismissKey) === curMonth) { banner.style.display = 'none'; return; }
+
+      banner.style.display = 'flex';
+      // Add dismiss button once
+      if (!banner.dataset.dismissAdded) {
+        banner.dataset.dismissAdded = '1';
+        const btn = document.createElement('button');
+        btn.textContent = '×';
+        btn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:20px;color:var(--text-2);flex-shrink:0';
+        btn.addEventListener('click', () => {
+          localStorage.setItem(dismissKey, curMonth);
+          banner.style.display = 'none';
+        });
+        banner.appendChild(btn);
+      }
+    }
+
+    async function checkMonthlySummary() {
+      const now = new Date();
+      if (now.getDate() > 3) return;
+      const curMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      if (localStorage.getItem('catetu_last_summary_month') === curMonth) return;
+
+      const { from: lf, to: lt } = monthRange(-1);
+      const { from: llf, to: llt } = monthRange(-2);
+      try {
+        const [r1, r2] = await Promise.all([
+          authFetch(`/expenses?startDate=${lf}&endDate=${lt}`),
+          authFetch(`/expenses?startDate=${llf}&endDate=${llt}`),
+        ]);
+        const prev = await r1.json();
+        const prevPrev = await r2.json();
+        if (prev.length === 0) return;
+
+        const total = prev.reduce((s, e) => s + e.amount, 0);
+        const totalPP = prevPrev.reduce((s, e) => s + e.amount, 0);
+        const pct = totalPP > 0 ? Math.round((total / totalPP) * 100) : null;
+        const pctLabel = pct !== null
+          ? (pct < 100 ? `↓ hemat ${100-pct}% dari sebelumnya` : `↑ ${pct-100}% dari sebelumnya`)
+          : '';
+
+        const catTotals = {};
+        prev.forEach(e => { catTotals[e.category] = (catTotals[e.category]||0)+e.amount; });
+        const top3 = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+        const prevDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+        const monthLabel = prevDate.toLocaleDateString('id-ID', {month:'long', year:'numeric'});
+
+        document.getElementById('monthly-summary-title').textContent = `Ringkasan ${monthLabel}`;
+        document.getElementById('monthly-summary-sub').textContent = pctLabel;
+        document.getElementById('monthly-summary-total').textContent = formatRp(total);
+        document.getElementById('monthly-summary-rows').innerHTML =
+          top3.map(([cat, amt]) =>
+            `<div class="monthly-row"><span>${CATS[cat]||'📦'} ${escHtml(cat)}</span><span>${formatRp(amt)}</span></div>`
+          ).join('') +
+          `<div class="monthly-row"><span style="color:var(--text-2)">${prev.length} transaksi</span><span></span></div>`;
+
+        document.getElementById('monthly-summary-overlay').style.display = 'flex';
+      } catch (_) {}
+    }
+
+    function closeMonthlySummary() {
+      const now = new Date();
+      localStorage.setItem('catetu_last_summary_month',
+        `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);
+      const overlay = document.getElementById('monthly-summary-overlay');
+      if (overlay) overlay.style.display = 'none';
+    }
+
+    function loadProfilSettings() {
+      const nudgeTime = document.getElementById('nudge-time-input');
+      if (nudgeTime) nudgeTime.value = localStorage.getItem('catetu_nudge_time') || '21:00';
+      const nudgeEnabled = document.getElementById('nudge-enabled-cb');
+      if (nudgeEnabled) nudgeEnabled.checked = localStorage.getItem('catetu_nudge_enabled') !== 'false';
+      const paydayInput = document.getElementById('payday-date-input');
+      if (paydayInput) paydayInput.value = localStorage.getItem('catetu_payday_date') || '';
+      const ramadanCb = document.getElementById('ramadan-toggle-cb');
+      if (ramadanCb) ramadanCb.checked = localStorage.getItem('catetu_ramadan_mode') === 'true';
+    }
+    function saveNudgeSetting() {
+      const t = document.getElementById('nudge-time-input')?.value || '21:00';
+      const en = document.getElementById('nudge-enabled-cb')?.checked !== false;
+      localStorage.setItem('catetu_nudge_time', t);
+      localStorage.setItem('catetu_nudge_enabled', String(en));
+    }
+    function savePaydaySetting() {
+      const v = document.getElementById('payday-date-input')?.value;
+      if (v) localStorage.setItem('catetu_payday_date', v); else localStorage.removeItem('catetu_payday_date');
+    }
+    function saveRamadanSetting() {
+      const on = document.getElementById('ramadan-toggle-cb')?.checked === true;
+      localStorage.setItem('catetu_ramadan_mode', String(on));
+      renderCatPills();
+    }
+
     async function loadProfil() {
       try {
         const res = await authFetch('/auth/me');
@@ -855,6 +1292,7 @@
         document.getElementById('profil-email').textContent = email;
         document.getElementById('profil-avatar').textContent = email.split('@')[0].slice(0, 2).toUpperCase();
       } catch (_) {}
+      loadProfilSettings();
     }
 
     function applyTheme(theme) {

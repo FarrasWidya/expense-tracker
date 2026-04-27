@@ -189,6 +189,20 @@ input,select{font-family:inherit;font-size:14px}
   padding:20px 20px 16px;cursor:pointer;transition:box-shadow .15s
 }
 .stat-tile:hover{box-shadow:0 2px 12px rgba(0,0,0,.08)}
+/* ── Phase 5: Depth & Delight ── */
+.insight-row-d{display:flex;gap:10px;margin-bottom:16px;overflow-x:auto}
+.insight-card-d{flex:0 0 280px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 30px 12px 14px;font-size:13px;line-height:1.45;color:var(--text);position:relative}
+.insight-dismiss-d{position:absolute;top:6px;right:8px;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:2px 4px}
+.weekly-card-d{background:var(--accent);border-radius:8px;padding:12px 30px 12px 14px;font-size:13px;color:#fff;position:relative;margin-bottom:16px}
+.weekly-dismiss-d{position:absolute;top:6px;right:8px;background:none;border:none;cursor:pointer;color:rgba(255,255,255,.75);font-size:16px;padding:2px 4px}
+.ramadan-banner-d{background:#FFF8E7;border:1px solid #F59E0B;border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.monthly-overlay-d{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:center;justify-content:center}
+.monthly-card-d{background:#fff;border-radius:12px;padding:28px 28px 24px;width:420px;max-width:90vw}
+.monthly-card-d h2{font-size:18px;font-weight:700;margin-bottom:4px}
+.m-sub{font-size:13px;color:var(--text-muted);margin-bottom:20px}
+.m-total{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;margin:8px 0 16px}
+.m-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px}
+.m-close{width:100%;padding:12px;background:var(--accent);color:#fff;border-radius:8px;font-weight:600;font-size:14px;margin-top:20px;border:none;cursor:pointer}
 .stat-tile .tile-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
 .stat-tile .tile-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;color:var(--text);margin-bottom:4px}
 .stat-tile .tile-sub{font-size:12px;color:var(--text-muted)}
@@ -485,6 +499,16 @@ table.expense-table{width:100%;border-collapse:collapse;font-size:13px}
 
 <!-- ═══════════════════════ SLIDE-OVER ═══════════════════════ -->
 <div id="slide-over"></div>
+
+<div id="monthly-modal-d" style="display:none" class="monthly-overlay-d">
+  <div class="monthly-card-d">
+    <h2 id="monthly-title-d">Ringkasan Bulan Lalu</h2>
+    <div class="m-sub" id="monthly-sub-d"></div>
+    <div class="m-total" id="monthly-total-d"></div>
+    <div id="monthly-rows-d"></div>
+    <button class="m-close" onclick="closeMonthlySummaryD()">Tutup</button>
+  </div>
+</div>
 
 <script>
 // ════════════════════════════════════════════════════
@@ -795,6 +819,18 @@ async function loadProfil() {
       </div>
     </div>
     <div class="profil-section">
+      <h3>Preferensi</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
+        <span style="font-size:14px">Mode Ramadan</span>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="ramadan-toggle-d" ${isRamadanActiveD() ? 'checked' : ''}
+            onchange="toggleRamadanD(this.checked)"
+            style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+          <span style="font-size:13px;color:var(--text-muted)">Ganti label kategori untuk Ramadan</span>
+        </label>
+      </div>
+    </div>
+    <div class="profil-section">
       <h3>Sesi</h3>
       <button class="logout-btn" onclick="if(confirm('Keluar dari akun?'))logout()">Keluar</button>
     </div>`;
@@ -1053,6 +1089,211 @@ async function deleteFromSlideOver() {
   if (r && r.ok) { closeSlideOver(); await loadCatatan(); }
 }
 
+// ── Phase 5: Monthly Summary (desktop) ──
+async function checkMonthlySummaryD() {
+  const now = new Date();
+  if (now.getDate() > 3) return;
+  const curMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  if (localStorage.getItem('catetu_last_summary_month') === curMonth) return;
+
+  const firstPrev = `${now.getFullYear()}-${String(now.getMonth()).padStart(2,'0')}-01`;
+  const lastPrev = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+  const firstPP = `${now.getFullYear()}-${String(now.getMonth()-1 < 1 ? 12 : now.getMonth()-1).padStart(2,'0')}-01`;
+  const ppYear = now.getMonth() < 2 ? now.getFullYear()-1 : now.getFullYear();
+  const lastPP = new Date(ppYear, now.getMonth()-1, 0).toISOString().split('T')[0];
+
+  try {
+    const [r1, r2] = await Promise.all([
+      api('GET', `/expenses?startDate=${firstPrev}&endDate=${lastPrev}`),
+      api('GET', `/expenses?startDate=${firstPP}&endDate=${lastPP}`),
+    ]);
+    if (!r1 || !r2) return;
+    const prev = await r1.json();
+    const prevPrev = await r2.json();
+    if (prev.length === 0) return;
+
+    const total = prev.reduce((s, e) => s + e.amount, 0);
+    const totalPP = prevPrev.reduce((s, e) => s + e.amount, 0);
+    const pct = totalPP > 0 ? Math.round((total / totalPP) * 100) : null;
+    const pctLabel = pct !== null
+      ? (pct < 100 ? `↓ hemat ${100-pct}% dari sebelumnya` : `↑ ${pct-100}% dari sebelumnya`)
+      : '';
+
+    const catTotals = {};
+    prev.forEach(e => { catTotals[e.category] = (catTotals[e.category]||0)+e.amount; });
+    const top3 = Object.entries(catTotals).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+    const prevDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    const mLabel = prevDate.toLocaleDateString('id-ID', {month:'long', year:'numeric'});
+
+    document.getElementById('monthly-title-d').textContent = `Ringkasan ${mLabel}`;
+    document.getElementById('monthly-sub-d').textContent = pctLabel;
+    document.getElementById('monthly-total-d').textContent = fmtRp(total);
+    document.getElementById('monthly-rows-d').innerHTML =
+      top3.map(([cat, amt]) =>
+        `<div class="m-row"><span>${catEmoji(cat)} ${cat}</span><span>${fmtRp(amt)}</span></div>`
+      ).join('') +
+      `<div class="m-row"><span style="color:var(--text-muted)">${prev.length} transaksi</span><span></span></div>`;
+
+    document.getElementById('monthly-modal-d').style.display = 'flex';
+  } catch (_) {}
+}
+
+function closeMonthlySummaryD() {
+  const now = new Date();
+  localStorage.setItem('catetu_last_summary_month',
+    `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);
+  const modal = document.getElementById('monthly-modal-d');
+  if (modal) modal.style.display = 'none';
+}
+
+// ── Phase 5: Ramadan Mode (desktop) ──
+const RAMADAN_RANGES_D = [
+  { year: 2026, start: new Date('2026-02-18T00:00:00'), end: new Date('2026-03-19T23:59:59') },
+  { year: 2027, start: new Date('2027-02-07T00:00:00'), end: new Date('2027-03-08T23:59:59') },
+  { year: 2028, start: new Date('2028-01-27T00:00:00'), end: new Date('2028-02-25T23:59:59') },
+];
+
+function getRamadanWindowD(now = new Date()) {
+  const lead = 14 * 86400000;
+  return RAMADAN_RANGES_D.find(r => now >= new Date(r.start.getTime()-lead) && now <= r.end) || null;
+}
+
+function isRamadanActiveD() { return localStorage.getItem('catetu_ramadan_mode') === 'true'; }
+
+function getDisplayLabelD(label) {
+  if (!isRamadanActiveD()) return label;
+  const map = { 'Makan & Minum': 'Sahur & Berbuka', 'Sedekah & Sosial': 'Zakat & Infaq' };
+  return map[label] || label;
+}
+
+function getRamadanBannerHtml() {
+  if (!isRamadanActiveD()) return '';
+  const now = new Date();
+  const range = RAMADAN_RANGES_D.find(r => now >= r.start && now <= r.end);
+  if (!range) return '';
+  return `<div class="ramadan-banner-d">
+    <span>🌙 Mode Ramadan aktif — kategori ditampilkan dalam konteks Ramadan</span>
+    <button onclick="toggleRamadanD(false)" style="font-size:12px;color:var(--text-muted);background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer">Nonaktifkan</button>
+  </div>`;
+}
+
+function toggleRamadanD(on) {
+  localStorage.setItem('catetu_ramadan_mode', String(on));
+  if (currentView === 'beranda') loadBeranda();
+  if (currentView === 'catatan') loadCatatan();
+}
+
+// ── Phase 5: Insight Engine (desktop) ──
+function isoWeek(date = new Date()) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - day);
+  const y = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return `${d.getUTCFullYear()}-W${String(Math.ceil((((d - y) / 86400000) + 1) / 7)).padStart(2, '0')}`;
+}
+
+function getDismissedD() { return JSON.parse(localStorage.getItem('catetu_dismissed_insights') || '[]'); }
+function addDismissedD(id) {
+  const d = getDismissedD();
+  if (!d.includes(id)) d.push(id);
+  localStorage.setItem('catetu_dismissed_insights', JSON.stringify(d));
+}
+function maybeClearMonthlyDismissals() {
+  const key = 'catetu_dismissed_insights_month';
+  const now = new Date();
+  const cur = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  if (now.getDate() === 1 && localStorage.getItem(key) !== cur) {
+    localStorage.removeItem('catetu_dismissed_insights');
+    localStorage.setItem(key, cur);
+  }
+}
+
+function computeInsightsD(expenses, lastMonthTotal) {
+  maybeClearMonthlyDismissals();
+  const dismissed = getDismissedD();
+  const now = new Date();
+  const daysElapsed = Math.max(now.getDate(), 1);
+  const results = [];
+
+  if (!expenses || expenses.length === 0) return results;
+
+  if (!dismissed.includes('top-category')) {
+    const totals = {};
+    expenses.forEach(e => { totals[e.category] = (totals[e.category]||0)+e.amount; });
+    const [cat, amt] = Object.entries(totals).sort((a,b) => b[1]-a[1])[0];
+    const emoji = catEmoji(cat);
+    results.push({ id: 'top-category', text: `Pengeluaran terbesar bulan ini: ${emoji} ${cat} — ${fmtRp(amt)}` });
+  }
+  if (!dismissed.includes('savings-vs-last') && lastMonthTotal > 0) {
+    const thisTotal = expenses.reduce((s, e) => s + e.amount, 0);
+    const pct = Math.round((thisTotal / lastMonthTotal) * 100);
+    if (pct < 100) results.push({ id: 'savings-vs-last', text: `Hemat ${100-pct}% dibanding bulan lalu 🎉` });
+  }
+  if (!dismissed.includes('busiest-day') && expenses.length >= 3) {
+    const byDay = {};
+    expenses.forEach(e => { const d = (e.date||'').substring(0,10); byDay[d] = (byDay[d]||0)+1; });
+    const [day, count] = Object.entries(byDay).sort((a,b) => b[1]-a[1])[0];
+    if (count >= 3) {
+      const label = new Date(day+'T00:00:00').toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'short'});
+      results.push({ id: 'busiest-day', text: `Hari tersibuk: ${label} — ${count} transaksi` });
+    }
+  }
+  if (!dismissed.includes('daily-avg')) {
+    const avg = Math.round(expenses.reduce((s,e)=>s+e.amount,0)/daysElapsed);
+    results.push({ id: 'daily-avg', text: `Rata-rata harian bulan ini: ${fmtRp(avg)}` });
+  }
+  if (!dismissed.includes('top-frequency') && expenses.length >= 5) {
+    const freq = {};
+    expenses.forEach(e => { freq[e.category] = (freq[e.category]||0)+1; });
+    const [cat, n] = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
+    if (n >= 3) results.push({ id: 'top-frequency', text: `Paling sering: ${catEmoji(cat)} ${cat} (${n}x bulan ini)` });
+  }
+  return results.slice(0, 3);
+}
+
+function dismissInsightD(id) {
+  addDismissedD(id);
+  document.querySelector(`.insight-card-d[data-insight-id="${id}"]`)?.remove();
+}
+
+async function getWeeklyInsightHtml() {
+  const weekKey = 'catetu_weekly_insight_week';
+  const cardKey = 'catetu_weekly_insight_card';
+  const dismissKey = 'catetu_weekly_card_dismissed_week';
+  const now = new Date();
+  const curWeek = isoWeek(now);
+  if (localStorage.getItem(dismissKey) === curWeek) return '';
+
+  if (now.getDay() === 1 && localStorage.getItem(weekKey) !== curWeek) {
+    const end = now.toISOString().split('T')[0];
+    const startD = new Date(now); startD.setDate(startD.getDate() - 6);
+    const start = startD.toISOString().split('T')[0];
+    try {
+      const r = await api('GET', `/expenses?startDate=${start}&endDate=${end}`);
+      if (r && r.ok) {
+        const exp = await r.json();
+        if (exp.length > 0) {
+          const totals = {};
+          exp.forEach(e => { totals[e.category] = (totals[e.category]||0)+e.amount; });
+          const [cat, amt] = Object.entries(totals).sort((a,b)=>b[1]-a[1])[0];
+          localStorage.setItem(cardKey, `Minggu lalu, ${catEmoji(cat)} ${cat} jadi pengeluaran terbesar (${fmtRp(amt)})`);
+          localStorage.setItem(weekKey, curWeek);
+        }
+      }
+    } catch (_) {}
+  }
+
+  const saved = localStorage.getItem(cardKey);
+  if (!saved || localStorage.getItem(weekKey) !== curWeek) return '';
+  return `<div class="weekly-card-d">${saved}<button class="weekly-dismiss-d" onclick="dismissWeeklyCardD()">×</button></div>`;
+}
+
+function dismissWeeklyCardD() {
+  localStorage.setItem('catetu_weekly_card_dismissed_week', isoWeek());
+  document.querySelector('.weekly-card-d')?.remove();
+}
+
 async function loadBeranda() {
   const view = document.getElementById('view-beranda');
   const now = new Date();
@@ -1088,9 +1329,21 @@ async function loadBeranda() {
 
   const recent = [...thisMonth].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 8);
 
+  const insightCards = computeInsightsD(thisMonth, totalLast);
+  const insightRowHtml = insightCards.length
+    ? `<div class="insight-row-d">${insightCards.map(c =>
+        `<div class="insight-card-d" data-insight-id="${c.id}">${c.text}<button class="insight-dismiss-d" onclick="dismissInsightD('${c.id}')">×</button></div>`
+      ).join('')}</div>`
+    : '';
+
+  const weeklyHtml = await getWeeklyInsightHtml();
+
   view.innerHTML = `
     <div class="view-title">Beranda</div>
     <div class="view-subtitle" id="beranda-month">${monthLabel}</div>
+    ${getRamadanBannerHtml()}
+    ${weeklyHtml}
+    ${insightRowHtml}
     <div class="stat-grid">
       <div class="stat-tile" onclick="navigate('catatan')">
         <div class="tile-label">Bulan Ini</div>
@@ -1122,6 +1375,8 @@ async function loadBeranda() {
         ? '<div class="empty-state">Belum ada catatan bulan ini.</div>'
         : recent.map(e => expenseRow(e)).join('')}
     </div>`;
+
+  checkMonthlySummaryD();
 }
 
 function filterCatalanByCategory(cat) {
@@ -1200,7 +1455,7 @@ function buildCatPills(scope, containerId) {
   container.innerHTML = '';
   CATEGORIES.forEach(c => {
     const pill = document.createElement('button');
-    pill.textContent = c.emoji + ' ' + c.label;
+    pill.textContent = c.emoji + ' ' + getDisplayLabelD(c.label);
     pill.className = 'cat-pill';
     pill.onclick = () => selectCat(scope, c.label, containerId,
       scope === 'rail' ? 'rail-save-btn' : 'overlay-save-btn',
