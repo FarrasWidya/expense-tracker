@@ -784,6 +784,7 @@
       scheduleNudge(todayCount);
       checkMonthlySummary();
       checkPaydayBanner();
+      checkRamadanSuggestion();
 
       renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
     }
@@ -827,7 +828,7 @@
 
     function renderCatPills() {
       document.getElementById('sheet-cats').innerHTML = CATEGORY_LIST.map(c =>
-        `<button class="cat-pill${c.label === sheetCat ? ' selected' : ''}" data-cat="${escHtml(c.label)}">${c.emoji} ${escHtml(c.label)}</button>`
+        `<button class="cat-pill${c.label === sheetCat ? ' selected' : ''}" data-cat="${escHtml(c.label)}">${c.emoji} ${escHtml(getDisplayLabel(c.label))}</button>`
       ).join('');
       document.querySelectorAll('.cat-pill').forEach(btn =>
         btn.addEventListener('click', () => { sheetCat = btn.dataset.cat; renderCatPills(); })
@@ -1124,6 +1125,55 @@
     }
 
     function openQuickAdd() { document.getElementById('fab')?.click(); }
+
+    const RAMADAN_RANGES = [
+      { year: 2026, start: new Date('2026-02-18T00:00:00'), end: new Date('2026-03-19T23:59:59') },
+      { year: 2027, start: new Date('2027-02-07T00:00:00'), end: new Date('2027-03-08T23:59:59') },
+      { year: 2028, start: new Date('2028-01-27T00:00:00'), end: new Date('2028-02-25T23:59:59') },
+    ];
+
+    function getCurrentRamadanWindow(now = new Date()) {
+      const leadUpMs = 14 * 86400000;
+      return RAMADAN_RANGES.find(r => now >= new Date(r.start.getTime() - leadUpMs) && now <= r.end) || null;
+    }
+
+    function isRamadanActive() { return localStorage.getItem('catetu_ramadan_mode') === 'true'; }
+
+    function getDisplayLabel(label) {
+      if (!isRamadanActive()) return label;
+      const map = { 'Makan & Minum': 'Sahur & Berbuka', 'Sedekah & Sosial': 'Zakat & Infaq' };
+      return map[label] || label;
+    }
+
+    function checkRamadanSuggestion() {
+      const now = new Date();
+      const range = getCurrentRamadanWindow(now);
+      if (!range) return;
+      if (now >= range.start) return; // in Ramadan already, suggestion no longer needed
+      if (isRamadanActive()) return;
+      const key = `catetu_ramadan_suggestion_${range.year}`;
+      if (localStorage.getItem(key)) return;
+      const el = document.getElementById('ramadan-suggestion');
+      if (el) el.style.display = 'block';
+    }
+
+    function activateRamadan() {
+      const range = getCurrentRamadanWindow();
+      if (range) localStorage.setItem(`catetu_ramadan_suggestion_${range.year}`, 'shown');
+      localStorage.setItem('catetu_ramadan_mode', 'true');
+      const el = document.getElementById('ramadan-suggestion');
+      if (el) el.style.display = 'none';
+      const cb = document.getElementById('ramadan-toggle-cb');
+      if (cb) cb.checked = true;
+      renderCatPills();
+    }
+
+    function dismissRamadanSuggestion() {
+      const range = getCurrentRamadanWindow();
+      if (range) localStorage.setItem(`catetu_ramadan_suggestion_${range.year}`, 'shown');
+      const el = document.getElementById('ramadan-suggestion');
+      if (el) el.style.display = 'none';
+    }
 
     function checkPaydayBanner() {
       const paydayDate = parseInt(localStorage.getItem('catetu_payday_date'), 10);
