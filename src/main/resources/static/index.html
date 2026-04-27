@@ -22,6 +22,11 @@
       --sb: env(safe-area-inset-bottom, 0px);
       --font: 'Plus Jakarta Sans', Inter, sans-serif;
       --mono: 'JetBrains Mono', monospace;
+      /* aliases used by Rumah feature */
+      --text-primary: var(--text);
+      --text-secondary: var(--text-2);
+      --surface-raised: var(--raised);
+      --divider: var(--border);
     }
     [data-theme="dark"] {
       --surface: #111;
@@ -113,6 +118,12 @@
     .page-header { padding: 16px 20px 8px; font-size: 22px; font-weight: 700; letter-spacing: -.3px; }
     .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--text-2); padding: 12px 20px 4px; }
     .card { margin: 8px 16px; background: var(--raised); border-radius: 12px; overflow: hidden; }
+    .btn-primary { padding: 12px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .btn-ghost { padding: 12px; background: none; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+    .input-field { width: 100%; padding: 12px; background: var(--raised); border: 1px solid var(--border); border-radius: 10px; font-size: 15px; font-family: var(--font); color: var(--text); }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 500; align-items: flex-end; justify-content: center; }
+    .modal-sheet { background: var(--surface); border-radius: 20px 20px 0 0; padding: 20px 20px calc(20px + var(--sb)); width: 100%; max-width: 480px; }
+    .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
 
     /* BERANDA */
     .expense-row {
@@ -432,12 +443,67 @@
       </div>
     </section>
 
+    <section id="screen-rumah" class="screen">
+      <!-- Empty state -->
+      <div id="rumah-empty" style="display:none; padding:48px 24px; text-align:center">
+        <div style="font-size:48px; margin-bottom:16px">🏘️</div>
+        <h2 style="font-size:20px; font-weight:700; margin-bottom:8px; color:var(--text-primary)">Catat bareng yuk</h2>
+        <p style="color:var(--text-secondary); margin-bottom:32px; font-size:14px">Buat atau gabung Rumah untuk mulai catat bareng</p>
+        <button class="btn-primary" style="width:100%; margin-bottom:12px" onclick="openBuatRumahModal()">Buat Rumah</button>
+        <button class="btn-ghost" style="width:100%" onclick="openGabungModal()">Gabung dengan link</button>
+      </div>
+
+      <!-- Active state -->
+      <div id="rumah-active" style="display:none">
+        <div id="rumah-header-card" style="margin:16px; padding:16px; background:var(--surface-raised); border-radius:16px"></div>
+        <div style="padding:0 16px 8px; color:var(--text-secondary); font-size:12px; font-weight:600">BARENG BULAN INI</div>
+        <div id="rumah-feed-list" style="padding:0 16px 80px"></div>
+      </div>
+
+      <!-- Buat Rumah modal -->
+      <div id="modal-buat-rumah" class="modal-overlay" style="display:none">
+        <div class="modal-sheet">
+          <div class="modal-handle"></div>
+          <h3 style="font-size:18px; font-weight:700; margin-bottom:20px">Buat Rumah</h3>
+          <input id="buat-nama" type="text" placeholder="Nama Rumah (mis. Keluarga Faras)" class="input-field" style="margin-bottom:12px">
+          <div style="display:flex; gap:8px; margin-bottom:16px">
+            <div style="flex:1">
+              <label style="font-size:12px; color:var(--text-secondary); display:block; margin-bottom:4px">Emoji</label>
+              <input id="buat-emoji" type="text" value="🏠" class="input-field" style="text-align:center; font-size:24px">
+            </div>
+            <div style="flex:1">
+              <label style="font-size:12px; color:var(--text-secondary); display:block; margin-bottom:4px">Warna</label>
+              <input id="buat-color" type="color" value="#00897B" style="width:100%; height:44px; border-radius:8px; border:1px solid var(--divider); cursor:pointer">
+            </div>
+          </div>
+          <button class="btn-primary" style="width:100%" onclick="submitBuatRumah()">Buat</button>
+          <button class="btn-ghost" style="width:100%; margin-top:8px" onclick="closeBuatRumahModal()">Batal</button>
+        </div>
+      </div>
+
+      <!-- Gabung modal -->
+      <div id="modal-gabung" class="modal-overlay" style="display:none">
+        <div class="modal-sheet">
+          <div class="modal-handle"></div>
+          <h3 style="font-size:18px; font-weight:700; margin-bottom:20px">Gabung Rumah</h3>
+          <input id="gabung-token" type="text" placeholder="Tempel link atau kode undangan" class="input-field" style="margin-bottom:12px" oninput="onGabungInput()">
+          <div id="gabung-preview" style="display:none; padding:12px; background:var(--surface-raised); border-radius:8px; margin-bottom:12px; font-size:14px">
+            <div id="gabung-preview-name" style="font-weight:600"></div>
+            <div id="gabung-preview-count" style="color:var(--text-secondary); font-size:13px"></div>
+          </div>
+          <button class="btn-primary" style="width:100%" onclick="submitGabung()">Gabung</button>
+          <button class="btn-ghost" style="width:100%; margin-top:8px" onclick="closeGabungModal()">Batal</button>
+        </div>
+      </div>
+    </section>
+
     <nav id="tab-bar">
       <button class="tab active" data-screen="beranda"><span class="ti">🏠</span><span>Beranda</span></button>
       <button class="tab" data-screen="catatan"><span class="ti">📋</span><span>Catatan</span></button>
       <div class="tab-gap"></div>
       <button class="tab" data-screen="anggaran"><span class="ti">💰</span><span>Anggaran</span></button>
       <button class="tab" data-screen="profil"><span class="ti">👤</span><span>Profil</span></button>
+      <button class="tab" data-screen="rumah"><span class="ti">🏘️</span><span>Rumah</span></button>
     </nav>
     <button id="fab">+</button>
 
@@ -476,6 +542,18 @@
         <button class="np-key" data-k="000">000</button>
         <button class="np-key" data-k="0">0</button>
         <button class="np-key" data-k="del">⌫</button>
+      </div>
+      <div id="bareng-toggle-row" style="display:none; align-items:center; gap:12px; padding:12px 0; border-top:1px solid var(--divider); margin-top:4px">
+        <div style="flex:1">
+          <div style="font-weight:600; font-size:14px; color:var(--text-primary)">Catat untuk Rumah</div>
+          <div id="bareng-members-preview" style="font-size:12px; color:var(--text-secondary); margin-top:2px"></div>
+        </div>
+        <label style="position:relative; width:44px; height:24px; cursor:pointer; flex-shrink:0">
+          <input type="checkbox" id="bareng-checkbox" onchange="onBarengToggle()" style="opacity:0; position:absolute; width:0; height:0">
+          <span id="bareng-switch" style="position:absolute; inset:0; background:var(--divider); border-radius:24px; transition:background 0.2s">
+            <span style="position:absolute; left:2px; top:2px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2)"></span>
+          </span>
+        </label>
       </div>
       <button id="sheet-simpan">Simpan</button>
     </div>
@@ -580,6 +658,21 @@
 
     function formatRp(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
     function today() { return new Date().toISOString().split('T')[0]; }
+
+    let _toastTimer = null;
+    function showToast(msg) {
+      let el = document.getElementById('simple-toast');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'simple-toast';
+        el.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;z-index:9999;pointer-events:none;transition:opacity .3s';
+        document.body.appendChild(el);
+      }
+      el.textContent = msg;
+      el.style.opacity = '1';
+      if (_toastTimer) clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 2000);
+    }
     function escHtml(s) {
       return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
@@ -841,6 +934,7 @@
     }
 
     function openSheet() {
+      updateBarengToggle();
       sheetAmount = '';
       updateAmountDisplay();
       document.getElementById('sheet-note-input').value = '';
@@ -875,7 +969,9 @@
       const btn = document.getElementById('sheet-simpan');
       btn.disabled = true;
       try {
-        const res = await authFetch('/expenses', {
+        const isBareng = document.getElementById('bareng-checkbox')?.checked && currentRumah;
+        const url = isBareng ? '/rumah/' + currentRumah.id + '/expenses' : '/expenses';
+        const res = await authFetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -887,7 +983,8 @@
         });
         if (!res.ok) throw new Error();
         closeSheet();
-        loadBeranda();
+        showToast(isBareng ? 'Tersimpan di Rumah! 🏠' : 'Tersimpan!');
+        if (isBareng) loadRumahFeed(); else loadBeranda();
       } catch (_) { alert('Gagal menyimpan. Coba lagi.'); }
       finally { btn.disabled = false; }
     });
@@ -1304,6 +1401,190 @@
     applyTheme(localStorage.getItem('catetu_theme') || 'light');
 
     document.querySelector('.tab[data-screen="profil"]').addEventListener('click', loadProfil);
+
+    // ─── Rumah ───────────────────────────────────────────────────────────────────
+
+    let currentRumah = null;
+    let rumahPollInterval = null;
+
+    async function loadRumahTab() {
+      try {
+        const res = await authFetch('/rumah/me');
+        const data = res.ok ? await res.json() : null;
+        currentRumah = data && data.id ? data : null;
+      } catch (e) { currentRumah = null; }
+
+      document.getElementById('rumah-empty').style.display = currentRumah ? 'none' : 'block';
+      document.getElementById('rumah-active').style.display = currentRumah ? 'block' : 'none';
+      updateBarengToggle();
+
+      if (currentRumah) {
+        renderRumahHeader(currentRumah);
+        loadRumahFeed();
+        startRumahPolling();
+      }
+    }
+
+    function renderRumahHeader(rumah) {
+      const avatars = (rumah.members || [])
+        .map(m => `<span style="width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;margin-right:-4px;border:2px solid var(--surface)">${((m.name || '?')[0]).toUpperCase()}</span>`)
+        .join('');
+      document.getElementById('rumah-header-card').innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+          <span style="font-size:28px">${rumah.emoji || '🏠'}</span>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:16px;color:var(--text-primary)">${rumah.name}</div>
+            <div style="font-size:12px;color:var(--text-secondary)">${(rumah.members||[]).length} anggota</div>
+          </div>
+          <button onclick="shareRumahLink('${rumah.inviteToken}')" style="background:none;border:none;cursor:pointer;font-size:20px;padding:4px" title="Bagikan link undangan">🔗</button>
+        </div>
+        <div style="display:flex;gap:4px;margin-bottom:12px">${avatars}</div>
+        <div id="rumah-contribution-bar" style="font-size:13px;color:var(--text-secondary)">Memuat kontribusi...</div>
+      `;
+      loadContribution(rumah.id);
+    }
+
+    async function loadContribution(rumahId) {
+      try {
+        const res = await authFetch('/rumah/' + rumahId + '/contribution');
+        if (!res.ok) return;
+        const members = await res.json();
+        const el = document.getElementById('rumah-contribution-bar');
+        if (!el) return;
+        if (!members || members.length === 0) {
+          el.textContent = 'Belum ada catatan bareng bulan ini';
+          return;
+        }
+        el.innerHTML = members
+          .map(m => `<span style="margin-right:12px"><b>${(m.name || '?').split(' ')[0]}</b> ${m.pct}%</span>`)
+          .join('');
+      } catch (e) { /* silent */ }
+    }
+
+    async function loadRumahFeed() {
+      if (!currentRumah) return;
+      try {
+        const res = await authFetch('/rumah/' + currentRumah.id + '/feed?page=0&size=30');
+        if (!res.ok) return;
+        const page = await res.json();
+        const list = document.getElementById('rumah-feed-list');
+        if (!list) return;
+        if (!page.content || page.content.length === 0) {
+          list.innerHTML = '<div style="text-align:center;color:var(--text-secondary);padding:32px;font-size:14px">Belum ada pengeluaran bersama</div>';
+          return;
+        }
+        list.innerHTML = page.content.map(exp => `
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--divider)">
+            <span style="width:40px;height:40px;border-radius:50%;background:var(--surface-raised);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${CATS[exp.category] || '📦'}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${exp.note || exp.category}</div>
+              <div style="font-size:12px;color:var(--text-secondary)">${exp.category} · ${((exp.createdBy && exp.createdBy.name) || '?').split(' ')[0]}</div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;flex-shrink:0">${formatRp(exp.amount)}</div>
+          </div>
+        `).join('');
+      } catch (e) { /* silent */ }
+    }
+
+    function startRumahPolling() {
+      stopRumahPolling();
+      rumahPollInterval = setInterval(() => {
+        if (!document.hidden && currentRumah) loadRumahFeed();
+      }, 30000);
+    }
+
+    function stopRumahPolling() {
+      if (rumahPollInterval) { clearInterval(rumahPollInterval); rumahPollInterval = null; }
+    }
+
+    function openBuatRumahModal() { document.getElementById('modal-buat-rumah').style.display = 'flex'; }
+    function closeBuatRumahModal() { document.getElementById('modal-buat-rumah').style.display = 'none'; }
+    function openGabungModal() { document.getElementById('modal-gabung').style.display = 'flex'; }
+    function closeGabungModal() { document.getElementById('modal-gabung').style.display = 'none'; }
+
+    async function onGabungInput() {
+      const raw = document.getElementById('gabung-token').value;
+      const match = raw.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+      const preview = document.getElementById('gabung-preview');
+      if (!match) { preview.style.display = 'none'; return; }
+      try {
+        const res = await fetch('/rumah/join/' + match[0]);
+        if (!res.ok) { preview.style.display = 'none'; return; }
+        const data = await res.json();
+        document.getElementById('gabung-preview-name').textContent = (data.emoji || '🏠') + ' ' + data.name;
+        document.getElementById('gabung-preview-count').textContent = data.memberCount + ' anggota';
+        preview.style.display = 'block';
+      } catch (e) { preview.style.display = 'none'; }
+    }
+
+    async function submitBuatRumah() {
+      const name = document.getElementById('buat-nama').value.trim();
+      const emoji = document.getElementById('buat-emoji').value.trim() || '🏠';
+      const color = document.getElementById('buat-color').value || '#00897B';
+      if (!name) { showToast('Isi nama Rumah dulu'); return; }
+      const res = await authFetch('/rumah', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, emoji, color })
+      });
+      if (res.ok) { closeBuatRumahModal(); loadRumahTab(); showToast('Rumah dibuat! 🏠'); }
+      else showToast('Gagal membuat Rumah, coba lagi');
+    }
+
+    async function submitGabung() {
+      const raw = document.getElementById('gabung-token').value.trim();
+      const match = raw.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+      if (!match) { showToast('Link tidak valid'); return; }
+      const res = await authFetch('/rumah/join/' + match[0], { method: 'POST' });
+      if (res.ok) { closeGabungModal(); loadRumahTab(); showToast('Berhasil bergabung!'); }
+      else if (res.status === 409) showToast('Kamu sudah punya Rumah atau Rumah sudah penuh');
+      else showToast('Link tidak valid');
+    }
+
+    function shareRumahLink(inviteToken) {
+      const link = window.location.origin + '/join/' + inviteToken;
+      if (navigator.share) {
+        navigator.share({ title: 'Gabung Rumahku di CatetU', url: link });
+      } else {
+        navigator.clipboard.writeText(link).then(() => showToast('Link undangan disalin! 🔗'));
+      }
+    }
+
+    // ─── Bareng toggle ───────────────────────────────────────────────────────────
+
+    function updateBarengToggle() {
+      const row = document.getElementById('bareng-toggle-row');
+      if (!row) return;
+      if (currentRumah) {
+        row.style.display = 'flex';
+        const names = (currentRumah.members || [])
+          .map(m => (m.name || '?').split(' ')[0])
+          .join(', ');
+        document.getElementById('bareng-members-preview').textContent = names;
+      } else {
+        row.style.display = 'none';
+      }
+      const cb = document.getElementById('bareng-checkbox');
+      if (cb) cb.checked = false;
+      updateBarengSwitchStyle();
+    }
+
+    function onBarengToggle() {
+      updateBarengSwitchStyle();
+    }
+
+    function updateBarengSwitchStyle() {
+      const cb = document.getElementById('bareng-checkbox');
+      const sw = document.getElementById('bareng-switch');
+      if (!cb || !sw) return;
+      sw.style.background = cb.checked ? 'var(--accent)' : 'var(--divider)';
+    }
+
+    // Wire Rumah tab data load and polling lifecycle
+    document.querySelector('.tab[data-screen="rumah"]')?.addEventListener('click', loadRumahTab);
+    document.querySelectorAll('.tab:not([data-screen="rumah"])').forEach(btn =>
+      btn.addEventListener('click', stopRumahPolling)
+    );
   </script>
 </body>
 </html>
