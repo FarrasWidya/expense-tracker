@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/**", "/oauth2/**", "/login/**",
-                                "/", "/index.html", "/favicon.ico"
+                                "/", "/index.html", "/desktop.html", "/favicon.ico"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

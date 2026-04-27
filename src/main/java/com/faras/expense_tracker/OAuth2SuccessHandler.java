@@ -44,6 +44,20 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
                         }));
 
         String token = jwtUtil.generateToken(user.getId());
-        getRedirectStrategy().sendRedirect(request, response, "/?token=" + token);
+        String destination = "/";
+        jakarta.servlet.http.Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (jakarta.servlet.http.Cookie c : cookies) {
+                if ("catetu_origin".equals(c.getName()) && "desktop".equals(c.getValue())) {
+                    destination = "/desktop.html";
+                    jakarta.servlet.http.Cookie clear = new jakarta.servlet.http.Cookie("catetu_origin", "");
+                    clear.setMaxAge(0);
+                    clear.setPath("/");
+                    response.addCookie(clear);
+                    break;
+                }
+            }
+        }
+        getRedirectStrategy().sendRedirect(request, response, destination + "?token=" + token);
     }
 }

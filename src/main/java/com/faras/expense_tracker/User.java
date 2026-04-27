@@ -21,6 +21,11 @@ public class User {
 
     private String googleId;
 
+    private String name;
+
+    @Column(columnDefinition = "TEXT")
+    private String avatarData;
+
     public enum Provider { LOCAL, GOOGLE }
 
     public Long getId() { return id; }
@@ -33,4 +38,8 @@ public class User {
     public void setProvider(Provider provider) { this.provider = provider; }
     public String getGoogleId() { return googleId; }
     public void setGoogleId(String googleId) { this.googleId = googleId; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getAvatarData() { return avatarData; }
+    public void setAvatarData(String avatarData) { this.avatarData = avatarData; }
 }

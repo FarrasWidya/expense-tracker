@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1280">
+<title>CatetU Desktop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --accent: #00897B;
+  --accent-light: #E0F2F1;
+  --surface: #FAFAF8;
+  --surface-raised: #F3F2EF;
+  --border: #E5E4E1;
+  --text: #1A1A18;
+  --text-muted: #6B6B68;
+  --red: #E53935;
+  --amber: #F59E0B;
+  --sidebar-w: 260px;
+  --radius: 8px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--surface);color:var(--text);height:100vh;overflow:hidden;display:flex}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select{font-family:inherit;font-size:14px}
+.hidden{display:none!important}
+
+/* ── Login Screen ── */
+#login-screen{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--surface);z-index:100
+}
+.login-card{
+  width:400px;background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:40px;box-shadow:0 4px 24px rgba(0,0,0,.07)
+}
+.login-card h1{font-size:24px;font-weight:700;color:var(--text);margin-bottom:4px}
+.login-card .tagline{font-size:13px;color:var(--text-muted);margin-bottom:28px}
+.tab-row{display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:24px}
+.tab-btn{flex:1;padding:10px;font-size:14px;font-weight:500;background:#fff;color:var(--text-muted);transition:all .15s}
+.tab-btn.active{background:var(--accent);color:#fff}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.field label{font-size:12px;font-weight:600;color:var(--text-muted)}
+.field input{
+  padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:14px;outline:none;transition:border-color .15s
+}
+.field input:focus{border-color:var(--accent)}
+.btn-primary{
+  width:100%;padding:12px;background:var(--accent);color:#fff;
+  border-radius:var(--radius);font-size:15px;font-weight:600;margin-top:4px;
+  transition:opacity .15s
+}
+.btn-primary:hover{opacity:.9}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.divider{display:flex;align-items:center;gap:12px;color:var(--text-muted);font-size:12px;margin:20px 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.btn-google{
+  width:100%;padding:11px;border:1px solid var(--border);border-radius:var(--radius);
+  font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:10px;
+  background:#fff;transition:background .15s
+}
+.btn-google:hover{background:var(--surface-raised)}
+#login-error{font-size:13px;color:var(--red);margin-top:12px;display:none}
+
+/* ── App Shell ── */
+#app-shell{width:100%;height:100vh;display:flex;overflow:hidden}
+#sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);height:100vh;
+  background:var(--surface-raised);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;overflow-y:auto
+}
+#main-content{flex:1;overflow-y:auto;padding:28px 32px}
+
+/* ── Sidebar: logo + nav ── */
+#logo-area{padding:20px 20px 8px;border-bottom:1px solid var(--border);margin-bottom:8px}
+#logo-area .wordmark{font-size:18px;font-weight:700;color:var(--text)}
+#logo-area .wordmark span{color:var(--accent)}
+#user-chip{
+  display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;
+  margin:8px;background:#fff;border:1px solid var(--border);cursor:pointer
+}
+#user-chip .avatar{
+  width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;
+  font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0
+}
+#user-chip .uname{font-size:13px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-btn{
+  display:flex;align-items:center;gap:10px;padding:10px 16px;width:100%;
+  border-radius:8px;margin:1px 4px;width:calc(100% - 8px);
+  font-size:14px;font-weight:500;color:var(--text-muted);transition:all .15s
+}
+.nav-btn:hover{background:#eae9e5;color:var(--text)}
+.nav-btn.active{background:var(--accent-light);color:var(--accent);font-weight:600}
+.nav-icon{font-size:16px;width:20px;text-align:center}
+
+/* ── Catat Rail ── */
+#catat-rail{
+  margin-top:auto;padding:16px;border-top:1px solid var(--border)
+}
+#catat-rail .rail-title{
+  font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--text-muted);margin-bottom:12px
+}
+#rail-amount-display{
+  font-family:var(--font-mono,'JetBrains Mono',monospace);
+  font-size:26px;font-weight:500;color:var(--text);
+  padding:10px 0 6px;border-bottom:2px solid var(--border);
+  margin-bottom:12px;min-height:50px;cursor:text
+}
+#rail-amount-display.has-value{border-bottom-color:var(--accent)}
+.rail-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:12px}
+.np-btn{
+  padding:10px 0;font-size:15px;font-weight:500;border-radius:6px;
+  background:#fff;border:1px solid var(--border);transition:background .1s
+}
+.np-btn:hover{background:var(--surface-raised)}
+.np-btn.np-action{background:var(--surface-raised);color:var(--text-muted)}
+.cat-pills{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.cat-pill{
+  font-size:12px;padding:4px 8px;border-radius:20px;border:1px solid var(--border);
+  background:#fff;cursor:pointer;transition:all .1s;white-space:nowrap
+}
+.cat-pill.selected{background:var(--accent);color:#fff;border-color:var(--accent)}
+#rail-note{
+  width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;
+  font-size:13px;outline:none;margin-bottom:8px;resize:none
+}
+#rail-note:focus{border-color:var(--accent)}
+#rail-save-btn{
+  width:100%;padding:11px;background:var(--accent);color:#fff;border-radius:8px;
+  font-size:14px;font-weight:600;transition:opacity .15s
+}
+#rail-save-btn:hover{opacity:.9}
+#rail-save-btn:disabled{opacity:.4;cursor:not-allowed}
+.rail-saved-toast{
+  font-size:12px;color:var(--accent);font-weight:600;text-align:center;
+  margin-top:6px;opacity:0;transition:opacity .3s
+}
+
+/* ── Views ── */
+.view-title{font-size:22px;font-weight:700;margin-bottom:4px}
+.view-subtitle{font-size:14px;color:var(--text-muted);margin-bottom:24px}
+
+/* ── Quick-add Overlay ── */
+#quickadd-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;
+  display:flex;align-items:center;justify-content:center
+}
+#quickadd-card{
+  width:440px;background:#fff;border-radius:12px;
+  padding:28px;box-shadow:0 8px 40px rgba(0,0,0,.15)
+}
+#quickadd-card h2{font-size:16px;font-weight:700;margin-bottom:16px}
+#overlay-amount-display{
+  font-family:'JetBrains Mono',monospace;font-size:32px;font-weight:500;
+  padding:8px 0 8px;border-bottom:2px solid var(--border);margin-bottom:16px;min-height:54px
+}
+#overlay-amount-display.has-value{border-bottom-color:var(--accent)}
+.overlay-numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px}
+.overlay-np-btn{
+  padding:12px 0;font-size:16px;font-weight:500;border-radius:8px;
+  background:var(--surface-raised);border:none;transition:background .1s
+}
+.overlay-np-btn:hover{background:#e0dfd9}
+.overlay-np-btn.np-action{color:var(--text-muted)}
+.overlay-cat-pills{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px}
+#overlay-note{
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;
+  font-size:13px;outline:none;margin-bottom:12px
+}
+#overlay-note:focus{border-color:var(--accent)}
+.overlay-footer{display:flex;gap:8px}
+#overlay-save-btn{
+  flex:1;padding:12px;background:var(--accent);color:#fff;border-radius:8px;
+  font-size:15px;font-weight:600
+}
+#overlay-save-btn:hover{opacity:.9}
+#overlay-cancel-btn{
+  padding:12px 16px;border:1px solid var(--border);border-radius:8px;
+  font-size:14px;font-weight:500;color:var(--text-muted)
+}
+
+/* ── Stat Tiles ── */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
+.stat-tile{
+  background:#fff;border:1px solid var(--border);border-radius:10px;
+  padding:20px 20px 16px;cursor:pointer;transition:box-shadow .15s
+}
+.stat-tile:hover{box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.stat-tile .tile-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px}
+.stat-tile .tile-value{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:500;color:var(--text);margin-bottom:4px}
+.stat-tile .tile-sub{font-size:12px;color:var(--text-muted)}
+.stat-tile .tile-sub.positive{color:#2E7D32}
+.stat-tile .tile-sub.negative{color:var(--red)}
+
+/* ── Expense List ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-header h3{font-size:15px;font-weight:600}
+.see-all{font-size:13px;color:var(--accent);text-decoration:none;font-weight:500}
+.expense-list{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.expense-row{
+  display:flex;align-items:center;gap:12px;padding:12px 16px;
+  border-bottom:1px solid var(--border);transition:background .1s
+}
+.expense-row:last-child{border-bottom:none}
+.expense-row:hover{background:var(--surface)}
+.exp-icon{
+  width:36px;height:36px;border-radius:50%;background:var(--accent-light);
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0
+}
+.exp-info{flex:1}
+.exp-name{font-size:14px;font-weight:500}
+.exp-meta{font-size:12px;color:var(--text-muted)}
+.exp-cat-tag{
+  display:inline-block;font-size:11px;padding:2px 6px;border-radius:4px;
+  background:var(--surface-raised);color:var(--text-muted)
+}
+.exp-amount{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;text-align:right}
+.empty-state{padding:40px;text-align:center;color:var(--text-muted);font-size:14px}
+
+/* ── Catatan Table ── */
+.catatan-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.catatan-toolbar input[type=text]{
+  flex:1;min-width:160px;padding:8px 12px;border:1px solid var(--border);
+  border-radius:var(--radius);font-size:14px;outline:none
+}
+.catatan-toolbar input:focus{border-color:var(--accent)}
+.catatan-toolbar select{
+  padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);
+  background:#fff;font-size:13px;outline:none;cursor:pointer
+}
+.table-wrap{background:#fff;border:1px solid var(--border);border-radius:10px;overflow:auto}
+table.expense-table{width:100%;border-collapse:collapse;font-size:13px}
+.expense-table th{
+  text-align:left;padding:10px 12px;font-size:11px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);
+  border-bottom:1px solid var(--border);white-space:nowrap;user-select:none;cursor:pointer
+}
+.expense-table th:hover{color:var(--text)}
+.expense-table th.sorted-asc::after{content:' ↑'}
+.expense-table th.sorted-desc::after{content:' ↓'}
+.expense-table th:first-child{width:40px;cursor:default}
+.expense-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.expense-table tr:last-child td{border-bottom:none}
+.expense-table tr:hover td{background:var(--surface)}
+.expense-table tr.selected td{background:#E0F2F1}
+.expense-table td.mono{font-family:'JetBrains Mono',monospace;font-weight:500}
+.expense-table td.clickable{cursor:pointer}
+
+/* ── Bulk action bar ── */
+#bulk-bar{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--text);color:#fff;border-radius:10px;padding:12px 20px;
+  display:flex;gap:12px;align-items:center;box-shadow:0 4px 24px rgba(0,0,0,.25);
+  font-size:14px;white-space:nowrap
+}
+#bulk-bar.hidden{display:none!important}
+.bulk-count{font-weight:600}
+.bulk-sep{opacity:.3}
+.bulk-action{
+  color:#fff;font-size:13px;font-weight:500;padding:4px 10px;border-radius:6px;
+  background:rgba(255,255,255,.15);transition:background .15s
+}
+.bulk-action:hover{background:rgba(255,255,255,.25)}
+.bulk-action.danger:hover{background:var(--red)}
+.bulk-cancel{color:rgba(255,255,255,.6);font-size:12px;margin-left:4px}
+
+/* ── Slide-over panel ── */
+#slide-over{
+  position:fixed;top:0;right:0;bottom:0;width:340px;
+  background:#fff;border-left:1px solid var(--border);z-index:150;
+  display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.08);
+  transform:translateX(100%);transition:transform .2s ease
+}
+#slide-over.open{transform:translateX(0)}
+#slide-over-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px;border-bottom:1px solid var(--border)
+}
+#slide-over-header h3{font-size:16px;font-weight:600}
+#slide-over-close{font-size:20px;color:var(--text-muted)}
+#slide-over-body{padding:20px;flex:1;overflow-y:auto}
+.so-field{margin-bottom:16px}
+.so-field label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px}
+.so-field input,.so-field select,.so-field textarea{
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;
+  font-size:14px;font-family:inherit;outline:none
+}
+.so-field input:focus,.so-field select:focus,.so-field textarea:focus{border-color:var(--accent)}
+.so-field .amount-input{font-family:'JetBrains Mono',monospace;font-size:18px}
+#slide-over-footer{padding:16px 20px;border-top:1px solid var(--border);display:flex;gap:8px}
+.so-save{flex:1;padding:11px;background:var(--accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600}
+.so-delete{padding:11px 16px;border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--red);font-weight:500}
+.so-delete:hover{background:#fff5f5}
+
+/* ── Catatan summary bar ── */
+.catatan-summary{
+  font-size:13px;color:var(--text-muted);padding:8px 12px;
+  border-top:1px solid var(--border);background:var(--surface);border-radius:0 0 10px 10px
+}
+
+/* ── Anggaran ── */
+.budget-grid{display:grid;grid-template-columns:1fr;gap:12px;max-width:640px}
+.budget-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px}
+.budget-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.budget-card-header .cat-name{font-size:15px;font-weight:600}
+.budget-card-header .amounts{font-size:13px;color:var(--text-muted)}
+.progress-wrap{position:relative;height:8px;background:var(--surface-raised);border-radius:4px;cursor:pointer}
+.progress-fill{height:100%;border-radius:4px;transition:width .3s}
+.progress-fill.ok{background:var(--accent)}
+.progress-fill.warn{background:var(--amber)}
+.progress-fill.over{background:var(--red)}
+.progress-tooltip{
+  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  background:var(--text);color:#fff;font-size:12px;padding:5px 10px;border-radius:6px;
+  white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10
+}
+.progress-wrap:hover .progress-tooltip{opacity:1}
+.budget-meta{display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--text-muted)}
+.add-budget-btn{
+  margin-top:16px;padding:10px 20px;border:1px dashed var(--border);border-radius:8px;
+  font-size:14px;color:var(--text-muted);width:100%;max-width:640px;
+  transition:all .15s
+}
+.add-budget-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* ── Budget Modal ── */
+#budget-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;
+  display:flex;align-items:center;justify-content:center
+}
+#budget-modal-card{
+  width:380px;background:#fff;border-radius:12px;padding:28px;
+  box-shadow:0 8px 40px rgba(0,0,0,.15)
+}
+#budget-modal-card h3{font-size:16px;font-weight:700;margin-bottom:20px}
+.modal-footer{display:flex;gap:8px;margin-top:20px}
+.modal-save{flex:1;padding:11px;background:var(--accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600}
+.modal-cancel{padding:11px 16px;border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text-muted)}
+
+/* ── Profil ── */
+.profil-section{background:#fff;border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px;max-width:560px}
+.profil-section h3{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:16px}
+.avatar-row{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.avatar-lg{
+  width:64px;height:64px;border-radius:50%;background:var(--accent);color:#fff;
+  font-size:24px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;flex-shrink:0
+}
+.avatar-lg img{width:100%;height:100%;object-fit:cover}
+.upload-btn{
+  padding:8px 14px;border:1px solid var(--border);border-radius:8px;
+  font-size:13px;font-weight:500;cursor:pointer;transition:all .15s
+}
+.upload-btn:hover{border-color:var(--accent);color:var(--accent)}
+.profil-field{margin-bottom:14px}
+.profil-field label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px}
+.profil-field input{
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;
+  font-size:14px;outline:none
+}
+.profil-field input:focus{border-color:var(--accent)}
+.save-profile-btn{padding:10px 20px;background:var(--accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600}
+.export-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.export-row select,.export-row input[type=date]{
+  padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none
+}
+.export-btn{padding:9px 18px;background:var(--accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600}
+.logout-btn{
+  padding:10px 20px;border:1px solid var(--red);color:var(--red);border-radius:8px;
+  font-size:14px;font-weight:500;transition:all .15s
+}
+.logout-btn:hover{background:#fff5f5}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ LOGIN SCREEN ═══════════════════════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1>Catet<span style="color:var(--accent)">U</span></h1>
+    <p class="tagline">Ngerti uangmu, pelan-pelan.</p>
+    <div class="tab-row">
+      <button class="tab-btn active" data-tab="masuk" onclick="switchTab('masuk')">Masuk</button>
+      <button class="tab-btn" data-tab="daftar" onclick="switchTab('daftar')">Daftar</button>
+    </div>
+
+    <div id="tab-masuk">
+      <div class="field"><label>Email</label><input id="l-email" type="email" placeholder="kamu@email.com"></div>
+      <div class="field"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••"></div>
+      <button class="btn-primary" onclick="doLogin()">Masuk</button>
+      <div class="divider" id="google-divider">atau</div>
+      <button class="btn-google" id="google-btn" onclick="doGoogleLogin()">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"/></svg>
+        Masuk dengan Google
+      </button>
+    </div>
+
+    <div id="tab-daftar" class="hidden">
+      <div class="field"><label>Email</label><input id="r-email" type="email" placeholder="kamu@email.com"></div>
+      <div class="field"><label>Password</label><input id="r-pass" type="password" placeholder="min. 6 karakter"></div>
+      <button class="btn-primary" onclick="doRegister()">Buat Akun</button>
+    </div>
+
+    <p id="login-error"></p>
+  </div>
+</div>
+
+<!-- ═══════════════════════ APP SHELL ═══════════════════════ -->
+<div id="app-shell" class="hidden">
+  <aside id="sidebar">
+    <div id="logo-area">
+      <div class="wordmark">Catet<span>U</span></div>
+    </div>
+
+    <div id="user-chip" onclick="navigate('profil')">
+      <div class="avatar" id="sidebar-avatar">?</div>
+      <span class="uname" id="sidebar-name">…</span>
+    </div>
+
+    <nav style="padding:8px 4px">
+      <button class="nav-btn active" data-view="beranda" onclick="navigate('beranda')"><span class="nav-icon">🏠</span>Beranda</button>
+      <button class="nav-btn" data-view="catatan" onclick="navigate('catatan')"><span class="nav-icon">📋</span>Catatan</button>
+      <button class="nav-btn" data-view="anggaran" onclick="navigate('anggaran')"><span class="nav-icon">💰</span>Anggaran</button>
+      <button class="nav-btn" data-view="profil" onclick="navigate('profil')"><span class="nav-icon">👤</span>Profil</button>
+    </nav>
+
+    <div id="catat-rail">
+      <div class="rail-title">Catat Cepat</div>
+      <div id="rail-amount-display" onclick="focusRail()">Rp 0</div>
+      <div class="rail-numpad" id="rail-numpad"></div>
+      <div class="cat-pills" id="rail-cat-pills"></div>
+      <textarea id="rail-note" rows="1" placeholder="Catatan (opsional)"></textarea>
+      <button id="rail-save-btn" onclick="saveRail()" disabled>Simpan</button>
+      <div class="rail-saved-toast" id="rail-toast">Tersimpan! ✓</div>
+    </div>
+  </aside>
+
+  <main id="main-content">
+    <div id="view-beranda" class="view">
+      <div class="view-title">Beranda</div>
+      <div class="view-subtitle" id="beranda-month">April 2026</div>
+      <!-- populated by JS -->
+    </div>
+    <div id="view-catatan" class="view hidden">
+      <div class="view-title">Catatan</div>
+      <!-- populated by JS -->
+    </div>
+    <div id="view-anggaran" class="view hidden">
+      <div class="view-title">Anggaran</div>
+      <!-- populated by JS -->
+    </div>
+    <div id="view-profil" class="view hidden">
+      <div class="view-title">Profil & Pengaturan</div>
+      <!-- populated by JS -->
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════════════════ QUICK-ADD OVERLAY ═══════════════════════ -->
+<div id="quickadd-overlay" class="hidden" onclick="overlayBgClick(event)">
+  <div id="quickadd-card">
+    <h2>Catat Cepat <kbd style="font-size:11px;opacity:.5">⌘N</kbd></h2>
+    <div id="overlay-amount-display">Rp 0</div>
+    <div class="overlay-numpad" id="overlay-numpad"></div>
+    <div class="overlay-cat-pills" id="overlay-cat-pills"></div>
+    <input id="overlay-note" type="text" placeholder="Catatan (opsional)">
+    <div class="overlay-footer">
+      <button id="overlay-cancel-btn" onclick="closeOverlay()">Batal</button>
+      <button id="overlay-save-btn" onclick="saveOverlay()" disabled>Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ BULK BAR ═══════════════════════ -->
+<div id="bulk-bar" class="hidden">
+  <span class="bulk-count" id="bulk-count">0 dipilih</span>
+  <span class="bulk-sep">|</span>
+  <button class="bulk-action" onclick="bulkRecategorize()">Pindah Kategori</button>
+  <button class="bulk-action danger" onclick="bulkDeleteSelected()">Hapus</button>
+  <button class="bulk-cancel" onclick="catanatState.selected.clear(); renderCatatan(document.getElementById('view-catatan'))">✕</button>
+</div>
+
+<!-- ═══════════════════════ SLIDE-OVER ═══════════════════════ -->
+<div id="slide-over"></div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  CONFIG & STATE
+// ════════════════════════════════════════════════════
+const API = '';
+const CATEGORIES = [
+  {emoji:'🍽️',label:'Makan & Minum'},
+  {emoji:'🛵',label:'Transportasi'},
+  {emoji:'🏠',label:'Kos & Rumah'},
+  {emoji:'📱',label:'Pulsa & Internet'},
+  {emoji:'🛍️',label:'Belanja'},
+  {emoji:'🎉',label:'Hiburan'},
+  {emoji:'💊',label:'Kesehatan'},
+  {emoji:'📚',label:'Pendidikan'},
+  {emoji:'🙏',label:'Sedekah & Sosial'},
+  {emoji:'✂️',label:'Perawatan Diri'},
+  {emoji:'💸',label:'Transfer & Hutang'},
+  {emoji:'📦',label:'Lainnya'},
+];
+
+let token = localStorage.getItem('catetu_desktop_token');
+let currentUser = null;
+let currentView = 'beranda';
+
+// numpad state (shared, keyed by 'rail' or 'overlay')
+const npState = { rail: { raw: '', cat: null }, overlay: { raw: '', cat: null } };
+
+// ════════════════════════════════════════════════════
+//  AUTH
+// ════════════════════════════════════════════════════
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(API + path, opts);
+  if (r.status === 401) { logout(); return null; }
+  return r;
+}
+
+async function init() {
+  // handle OAuth redirect
+  const params = new URLSearchParams(location.search);
+  if (params.has('token')) {
+    token = params.get('token');
+    localStorage.setItem('catetu_desktop_token', token);
+    history.replaceState(null, '', '/desktop.html');
+  }
+  if (!token) { showLogin(); return; }
+  const r = await api('GET', '/auth/me');
+  if (!r || !r.ok) { showLogin(); return; }
+  currentUser = await r.json();
+  showApp();
+}
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app-shell').classList.add('hidden');
+  // check if Google OAuth is available
+  api('GET', '/auth/config').then(r => r && r.json()).then(cfg => {
+    if (cfg && !cfg.googleEnabled) {
+      document.getElementById('google-divider').classList.add('hidden');
+      document.getElementById('google-btn').classList.add('hidden');
+    }
+  });
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-shell').classList.remove('hidden');
+  updateSidebarUser();
+  buildNumpad('rail', 'rail-numpad', 'rail-amount-display', 'rail-save-btn');
+  buildCatPills('rail', 'rail-cat-pills');
+  buildNumpad('overlay', 'overlay-numpad', 'overlay-amount-display', 'overlay-save-btn');
+  buildCatPills('overlay', 'overlay-cat-pills');
+  navigate('beranda');
+}
+
+function updateSidebarUser() {
+  if (!currentUser) return;
+  const av = document.getElementById('sidebar-avatar');
+  const nm = document.getElementById('sidebar-name');
+  av.textContent = currentUser.avatarInitials || '?';
+  nm.textContent = currentUser.name || currentUser.email;
+}
+
+function logout() {
+  localStorage.removeItem('catetu_desktop_token');
+  token = null;
+  currentUser = null;
+  showLogin();
+}
+
+async function doLogin() {
+  const email = document.getElementById('l-email').value;
+  const pass = document.getElementById('l-pass').value;
+  showErr('');
+  const r = await fetch('/auth/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({email, password: pass})
+  });
+  if (r.ok) {
+    const d = await r.json();
+    token = d.token;
+    localStorage.setItem('catetu_desktop_token', token);
+    const me = await api('GET', '/auth/me');
+    currentUser = await me.json();
+    showApp();
+  } else {
+    const msg = r.status === 401 ? 'Email atau password salah.' : 'Terjadi kesalahan.';
+    showErr(msg);
+  }
+}
+
+async function doRegister() {
+  const email = document.getElementById('r-email').value;
+  const pass = document.getElementById('r-pass').value;
+  showErr('');
+  const r = await fetch('/auth/register', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({email, password: pass})
+  });
+  if (r.ok) {
+    const d = await r.json();
+    token = d.token;
+    localStorage.setItem('catetu_desktop_token', token);
+    const me = await api('GET', '/auth/me');
+    currentUser = await me.json();
+    showApp();
+  } else if (r.status === 409) {
+    showErr('Email sudah terdaftar. Coba Masuk.');
+  } else {
+    showErr('Terjadi kesalahan.');
+  }
+}
+
+function doGoogleLogin() {
+  document.cookie = 'catetu_origin=desktop; path=/; max-age=300';
+  window.location.href = '/oauth2/authorization/google';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.getElementById('tab-masuk').classList.toggle('hidden', tab !== 'masuk');
+  document.getElementById('tab-daftar').classList.toggle('hidden', tab !== 'daftar');
+  showErr('');
+}
+
+function showErr(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+// ════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════
+function navigate(view) {
+  currentView = view;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+  document.getElementById('view-' + view).classList.remove('hidden');
+  if (view === 'beranda') loadBeranda();
+  if (view === 'catatan') loadCatatan();
+  if (view === 'anggaran') loadAnggaran();
+  if (view === 'profil') loadProfil();
+}
+
+// ── Anggaran ──
+function getBudgets() {
+  try { return JSON.parse(localStorage.getItem('catetu_budgets') || '[]'); } catch { return []; }
+}
+function saveBudgets(budgets) {
+  localStorage.setItem('catetu_budgets', JSON.stringify(budgets));
+}
+
+async function loadAnggaran() {
+  const view = document.getElementById('view-anggaran');
+  const now = new Date();
+  const firstDay = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().split('T')[0];
+
+  const r = await api('GET', `/expenses?startDate=${firstDay}&endDate=${lastDay}`);
+  if (!r) return;
+  const expenses = await r.json();
+  const catTotals = {};
+  expenses.forEach(e => { catTotals[e.category] = (catTotals[e.category] || 0) + e.amount; });
+
+  const budgets = getBudgets();
+
+  const cards = budgets.length === 0
+    ? '<p style="color:var(--text-muted);font-size:14px">Belum ada anggaran. Tambah anggaran di bawah.</p>'
+    : budgets.map(b => {
+        const spent = catTotals[b.category] || 0;
+        const pct = Math.min(Math.round((spent / b.limit) * 100), 100);
+        const cls = pct >= 95 ? 'over' : pct >= 80 ? 'warn' : 'ok';
+        return `<div class="budget-card">
+          <div class="budget-card-header">
+            <span class="cat-name">${catEmoji(b.category)} ${b.category}</span>
+            <span class="amounts">${fmtRp(spent)} / ${fmtRp(b.limit)}</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-fill ${cls}" style="width:${pct}%"></div>
+            <div class="progress-tooltip">${fmtRp(spent)} dari ${fmtRp(b.limit)} (${pct}%)</div>
+          </div>
+          <div class="budget-meta">
+            <span>Sisa ${fmtRp(Math.max(b.limit - spent, 0))}</span>
+            <span>${pct}%</span>
+          </div>
+        </div>`;
+      }).join('');
+
+  view.innerHTML = `
+    <div class="view-title">Anggaran</div>
+    <div class="view-subtitle">Bulan ${now.toLocaleDateString('id-ID',{month:'long',year:'numeric'})}</div>
+    <div class="budget-grid">${cards}</div>
+    <button class="add-budget-btn" onclick="openBudgetModal()">+ Atur Anggaran</button>
+    <div id="budget-modal" class="hidden" onclick="if(event.target.id==='budget-modal')closeBudgetModal()">
+      <div id="budget-modal-card">
+        <h3>Atur Anggaran</h3>
+        <div class="profil-field">
+          <label>Kategori</label>
+          <select id="bm-cat" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none">
+            ${CATEGORIES.map(c=>`<option value="${c.label}">${c.emoji} ${c.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="profil-field">
+          <label>Batas Bulanan (Rp)</label>
+          <input type="number" id="bm-limit" placeholder="500000">
+        </div>
+        <div class="modal-footer">
+          <button class="modal-cancel" onclick="closeBudgetModal()">Batal</button>
+          <button class="modal-save" onclick="saveBudgetModal()">Simpan</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function openBudgetModal() {
+  document.getElementById('budget-modal').classList.remove('hidden');
+}
+function closeBudgetModal() {
+  document.getElementById('budget-modal').classList.add('hidden');
+}
+function saveBudgetModal() {
+  const cat = document.getElementById('bm-cat').value;
+  const limit = parseFloat(document.getElementById('bm-limit').value);
+  if (!cat || !limit || limit <= 0) return;
+  const budgets = getBudgets().filter(b => b.category !== cat);
+  budgets.push({ category: cat, limit });
+  saveBudgets(budgets);
+  closeBudgetModal();
+  loadAnggaran();
+}
+
+// ── Profil ──
+async function loadProfil() {
+  const view = document.getElementById('view-profil');
+  const r = await api('GET', '/auth/me');
+  if (!r) return;
+  const user = await r.json();
+
+  const avatarHtml = user.hasAvatar
+    ? `<img src="${user.avatarData || ''}" alt="avatar">`
+    : user.avatarInitials || '?';
+
+  view.innerHTML = `
+    <div class="view-title">Profil & Pengaturan</div>
+    <div class="profil-section">
+      <h3>Akun</h3>
+      <div class="avatar-row">
+        <div class="avatar-lg" id="profil-avatar">${avatarHtml}</div>
+        <div>
+          <label class="upload-btn" for="avatar-file-input">Unggah Foto</label>
+          <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Maks. 500KB</div>
+        </div>
+      </div>
+      <div class="profil-field">
+        <label>Nama Tampilan</label>
+        <input id="profil-name" type="text" value="${user.name || ''}" placeholder="Nama kamu">
+      </div>
+      <div class="profil-field">
+        <label>Email</label>
+        <input type="text" value="${user.email}" disabled style="background:var(--surface-raised)">
+      </div>
+      <button class="save-profile-btn" onclick="saveProfile()">Simpan</button>
+    </div>
+    <div class="profil-section">
+      <h3>Export Data</h3>
+      <div class="export-row">
+        <select id="export-format">
+          <option value="csv">CSV</option>
+          <option value="json">JSON</option>
+          <option value="excel">Excel (.xlsx)</option>
+        </select>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px">Dari</label>
+          <input type="date" id="export-start">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px">Sampai</label>
+          <input type="date" id="export-end" value="${new Date().toISOString().split('T')[0]}">
+        </div>
+        <button class="export-btn" onclick="doExport()">Export</button>
+      </div>
+    </div>
+    <div class="profil-section">
+      <h3>Sesi</h3>
+      <button class="logout-btn" onclick="if(confirm('Keluar dari akun?'))logout()">Keluar</button>
+    </div>`;
+}
+
+async function saveProfile() {
+  const name = document.getElementById('profil-name').value;
+  const r = await api('PATCH', '/auth/me', { name });
+  if (r && r.ok) {
+    currentUser = await r.json();
+    updateSidebarUser();
+    alert('Profil tersimpan!');
+  }
+}
+
+async function uploadAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 500000) { alert('Ukuran file maksimal 500KB.'); return; }
+  const formData = new FormData();
+  formData.append('file', file);
+  const r = await fetch('/auth/avatar', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token },
+    body: formData,
+  });
+  if (r.ok) {
+    currentUser = await r.json();
+    updateSidebarUser();
+    loadProfil();
+  }
+}
+
+async function doExport() {
+  const format = document.getElementById('export-format').value;
+  const start = document.getElementById('export-start').value;
+  const end = document.getElementById('export-end').value;
+  let url = `/expenses/export?format=${format}`;
+  if (start) url += `&startDate=${start}`;
+  if (end) url += `&endDate=${end}`;
+  const r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+  if (!r.ok) { alert('Export gagal.'); return; }
+  const blob = await r.blob();
+  const ext = format === 'excel' ? 'xlsx' : format;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `expenses.${ext}`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+let catanatState = {
+  expenses: [],
+  sortCol: localStorage.getItem('catatan_sort_col') || 'date',
+  sortDir: localStorage.getItem('catatan_sort_dir') || 'desc',
+  filterCat: '',
+  selected: new Set(),
+};
+
+async function loadCatatan(filterCat) {
+  if (filterCat !== undefined) catanatState.filterCat = filterCat;
+  const view = document.getElementById('view-catatan');
+  const r = await api('GET', '/expenses');
+  if (!r) return;
+  catanatState.expenses = await r.json();
+  catanatState.selected.clear();
+  renderCatatan(view);
+}
+
+function applyCatalanFilter() {
+  const filterEl = document.getElementById('catatan-filter-cat');
+  if (filterEl) catanatState.filterCat = filterEl.value;
+  const view = document.getElementById('view-catatan');
+  renderCatatan(view);
+}
+
+function renderCatatan(view) {
+  const { expenses, sortCol, sortDir, filterCat, selected } = catanatState;
+
+  let rows = [...expenses];
+  if (filterCat) rows = rows.filter(e => e.category === filterCat);
+  rows.sort((a, b) => {
+    let av = a[sortCol], bv = b[sortCol];
+    if (typeof av === 'string') av = av.toLowerCase(), bv = bv.toLowerCase();
+    return sortDir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
+  });
+
+  const total = rows.reduce((s, e) => s + e.amount, 0);
+
+  const catOptions = [...new Set(expenses.map(e => e.category))].sort()
+    .map(c => `<option value="${c}" ${c === filterCat ? 'selected' : ''}>${catEmoji(c)} ${c}</option>`).join('');
+
+  const colMap = { date: 'Tanggal', category: 'Kategori', note: 'Catatan', amount: 'Jumlah (Rp)' };
+  const thHtml = Object.entries(colMap).map(([col, label]) => {
+    const cls = sortCol === col ? 'sorted-' + sortDir : '';
+    return `<th class="${cls}" onclick="sortCatatan('${col}')">${label}</th>`;
+  }).join('');
+
+  const rowsHtml = rows.length === 0
+    ? `<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted)">Tidak ada catatan.</td></tr>`
+    : rows.map(e => `
+      <tr class="${selected.has(e.id) ? 'selected' : ''}" data-id="${e.id}">
+        <td><input type="checkbox" class="row-cb" data-id="${e.id}" ${selected.has(e.id) ? 'checked' : ''}
+            onclick="toggleSelect(${e.id}, event)"></td>
+        <td class="clickable" onclick="openSlideOver(${e.id})">${fmtDate(e.date)}</td>
+        <td class="clickable" onclick="openSlideOver(${e.id})">${catEmoji(e.category)} ${e.category}</td>
+        <td class="clickable" onclick="openSlideOver(${e.id})">${e.note || '—'}</td>
+        <td class="mono clickable" onclick="openSlideOver(${e.id})">${fmtRp(e.amount)}</td>
+      </tr>`).join('');
+
+  view.innerHTML = `
+    <div class="view-title">Catatan</div>
+    <div class="catatan-toolbar">
+      <input type="text" placeholder="Cari catatan…" oninput="filterCatatan(this.value)">
+      <select id="catatan-filter-cat" onchange="applyCatalanFilter()">
+        <option value="">Semua kategori</option>
+        ${catOptions}
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table class="expense-table">
+        <thead><tr>
+          <th><input type="checkbox" id="select-all" onclick="toggleSelectAll(this)"></th>
+          ${thHtml}
+        </tr></thead>
+        <tbody id="catatan-tbody">${rowsHtml}</tbody>
+      </table>
+      <div class="catatan-summary">${rows.length} catatan · Total ${fmtRp(total)}</div>
+    </div>`;
+
+  updateBulkBar();
+}
+
+function sortCatatan(col) {
+  if (catanatState.sortCol === col) {
+    catanatState.sortDir = catanatState.sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    catanatState.sortCol = col;
+    catanatState.sortDir = 'desc';
+  }
+  localStorage.setItem('catatan_sort_col', catanatState.sortCol);
+  localStorage.setItem('catatan_sort_dir', catanatState.sortDir);
+  renderCatatan(document.getElementById('view-catatan'));
+}
+
+function filterCatatan(q) {
+  const lower = q.toLowerCase();
+  document.querySelectorAll('#catatan-tbody tr').forEach(tr => {
+    const text = tr.textContent.toLowerCase();
+    tr.style.display = text.includes(lower) ? '' : 'none';
+  });
+}
+
+function toggleSelect(id, e) {
+  e.stopPropagation();
+  if (catanatState.selected.has(id)) catanatState.selected.delete(id);
+  else catanatState.selected.add(id);
+  const tr = document.querySelector(`tr[data-id="${id}"]`);
+  if (tr) tr.classList.toggle('selected', catanatState.selected.has(id));
+  updateBulkBar();
+}
+
+function toggleSelectAll(cb) {
+  const view = document.getElementById('view-catatan');
+  const { expenses, filterCat } = catanatState;
+  let rows = filterCat ? expenses.filter(e => e.category === filterCat) : expenses;
+  if (cb.checked) rows.forEach(e => catanatState.selected.add(e.id));
+  else catanatState.selected.clear();
+  renderCatatan(view);
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulk-bar');
+  const n = catanatState.selected.size;
+  if (n === 0) { bar.classList.add('hidden'); return; }
+  bar.classList.remove('hidden');
+  document.getElementById('bulk-count').textContent = n + ' dipilih';
+}
+
+async function bulkDeleteSelected() {
+  if (!confirm(`Hapus ${catanatState.selected.size} catatan?`)) return;
+  const ids = [...catanatState.selected];
+  const r = await api('DELETE', '/expenses/batch', { ids });
+  if (r && r.ok) { catanatState.selected.clear(); await loadCatatan(); }
+}
+
+async function bulkRecategorize() {
+  const newCat = prompt('Kategori baru:');
+  if (!newCat) return;
+  const ids = [...catanatState.selected];
+  const r = await api('PATCH', '/expenses/batch/category', { ids, category: newCat });
+  if (r && r.ok) { catanatState.selected.clear(); await loadCatatan(); }
+}
+
+// ── Slide-over ──
+let slideOverId = null;
+
+function openSlideOver(id) {
+  const expense = catanatState.expenses.find(e => e.id === id);
+  if (!expense) return;
+  slideOverId = id;
+  const catOpts = CATEGORIES.map(c =>
+    `<option value="${c.label}" ${c.label === expense.category ? 'selected' : ''}>${c.emoji} ${c.label}</option>`
+  ).join('');
+  const so = document.getElementById('slide-over');
+  so.innerHTML = `
+    <div id="slide-over-header">
+      <h3>Detail</h3>
+      <button id="slide-over-close" onclick="closeSlideOver()">×</button>
+    </div>
+    <div id="slide-over-body">
+      <div class="so-field">
+        <label>Tanggal</label>
+        <input type="date" id="so-date" value="${expense.date}">
+      </div>
+      <div class="so-field">
+        <label>Kategori</label>
+        <select id="so-cat">${catOpts}</select>
+      </div>
+      <div class="so-field">
+        <label>Jumlah (Rp)</label>
+        <input class="amount-input" type="number" id="so-amount" value="${expense.amount}">
+      </div>
+      <div class="so-field">
+        <label>Catatan</label>
+        <textarea id="so-note" rows="2">${expense.note || ''}</textarea>
+      </div>
+    </div>
+    <div id="slide-over-footer">
+      <button class="so-delete" onclick="deleteFromSlideOver()">Hapus</button>
+      <button class="so-save" onclick="saveSlideOver()">Simpan</button>
+    </div>`;
+  so.classList.add('open');
+}
+
+function closeSlideOver() {
+  document.getElementById('slide-over').classList.remove('open');
+  slideOverId = null;
+}
+
+async function saveSlideOver() {
+  if (!slideOverId) return;
+  const body = {
+    amount: parseFloat(document.getElementById('so-amount').value),
+    category: document.getElementById('so-cat').value,
+    note: document.getElementById('so-note').value,
+    date: document.getElementById('so-date').value,
+  };
+  const r = await api('PUT', '/expenses/' + slideOverId, body);
+  if (r && r.ok) { closeSlideOver(); await loadCatatan(); }
+}
+
+async function deleteFromSlideOver() {
+  if (!slideOverId || !confirm('Hapus catatan ini?')) return;
+  const r = await api('DELETE', '/expenses/' + slideOverId);
+  if (r && r.ok) { closeSlideOver(); await loadCatatan(); }
+}
+
+async function loadBeranda() {
+  const view = document.getElementById('view-beranda');
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const firstThisMonth = `${year}-${String(month+1).padStart(2,'0')}-01`;
+  const lastThisMonth = new Date(year, month+1, 0).toISOString().split('T')[0];
+  const firstLastMonth = `${year}-${String(month).padStart(2,'0')}-01`;
+  const lastLastMonth = new Date(year, month, 0).toISOString().split('T')[0];
+
+  const [rThis, rLast] = await Promise.all([
+    api('GET', `/expenses?startDate=${firstThisMonth}&endDate=${lastThisMonth}`),
+    api('GET', `/expenses?startDate=${firstLastMonth}&endDate=${lastLastMonth}`),
+  ]);
+  if (!rThis || !rLast) return;
+  const thisMonth = await rThis.json();
+  const lastMonth = await rLast.json();
+
+  const totalThis = thisMonth.reduce((s, e) => s + e.amount, 0);
+  const totalLast = lastMonth.reduce((s, e) => s + e.amount, 0);
+  const pct = totalLast > 0 ? Math.round((totalThis / totalLast) * 100) : null;
+  const pctLabel = pct !== null ? `${pct}% dari bulan lalu` : '—';
+  const pctClass = pct !== null ? (pct > 100 ? 'negative' : 'positive') : '';
+
+  const catTotals = {};
+  thisMonth.forEach(e => { catTotals[e.category] = (catTotals[e.category] || 0) + e.amount; });
+  const topCat = Object.entries(catTotals).sort((a,b) => b[1]-a[1])[0];
+  const topCatLabel = topCat ? topCat[0] : '—';
+  const topCatEmoji = topCat ? (CATEGORIES.find(c => c.label === topCat[0])?.emoji || '📦') : '';
+
+  const monthLabel = now.toLocaleDateString('id-ID', {month:'long', year:'numeric'});
+  document.getElementById('beranda-month').textContent = monthLabel;
+
+  const recent = [...thisMonth].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 8);
+
+  view.innerHTML = `
+    <div class="view-title">Beranda</div>
+    <div class="view-subtitle" id="beranda-month">${monthLabel}</div>
+    <div class="stat-grid">
+      <div class="stat-tile" onclick="navigate('catatan')">
+        <div class="tile-label">Bulan Ini</div>
+        <div class="tile-value">${fmtRp(totalThis)}</div>
+        <div class="tile-sub ${pctClass}">${pctLabel}</div>
+      </div>
+      <div class="stat-tile" onclick="navigate('catatan')">
+        <div class="tile-label">Bulan Lalu</div>
+        <div class="tile-value">${fmtRp(totalLast)}</div>
+        <div class="tile-sub">${lastMonth.length} catatan</div>
+      </div>
+      <div class="stat-tile" onclick="filterCatalanByCategory('${topCatLabel}')">
+        <div class="tile-label">Terbesar</div>
+        <div class="tile-value" style="font-size:15px">${topCatEmoji} ${topCatLabel}</div>
+        <div class="tile-sub">${topCat ? fmtRp(topCat[1]) : '—'}</div>
+      </div>
+      <div class="stat-tile" onclick="navigate('catatan')">
+        <div class="tile-label">Transaksi</div>
+        <div class="tile-value" style="font-family:inherit">${thisMonth.length}</div>
+        <div class="tile-sub">bulan ini</div>
+      </div>
+    </div>
+    <div class="section-header">
+      <h3>Terbaru</h3>
+      <a class="see-all" onclick="navigate('catatan')" href="#">Lihat semua →</a>
+    </div>
+    <div class="expense-list">
+      ${recent.length === 0
+        ? '<div class="empty-state">Belum ada catatan bulan ini.</div>'
+        : recent.map(e => expenseRow(e)).join('')}
+    </div>`;
+}
+
+function filterCatalanByCategory(cat) {
+  navigate('catatan');
+  setTimeout(() => {
+    const filterEl = document.getElementById('catatan-filter-cat');
+    if (filterEl) { filterEl.value = cat; applyCatalanFilter(); }
+  }, 100);
+}
+
+function fmtRp(amount) {
+  return 'Rp ' + Math.round(amount).toLocaleString('id-ID');
+}
+
+function catEmoji(label) {
+  return CATEGORIES.find(c => c.label === label)?.emoji || '📦';
+}
+
+function expenseRow(e) {
+  return `<div class="expense-row" data-id="${e.id}">
+    <div class="exp-icon">${catEmoji(e.category)}</div>
+    <div class="exp-info">
+      <div class="exp-name">${e.note || e.category}</div>
+      <div class="exp-meta"><span class="exp-cat-tag">${e.category}</span> · ${fmtDate(e.date)}</div>
+    </div>
+    <div class="exp-amount">${fmtRp(e.amount)}</div>
+  </div>`;
+}
+
+function fmtDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('id-ID', {day:'numeric', month:'short'});
+}
+
+// ════════════════════════════════════════════════════
+//  NUMPAD
+// ════════════════════════════════════════════════════
+function buildNumpad(scope, containerId, displayId, saveBtnId) {
+  const container = document.getElementById(containerId);
+  const keys = ['1','2','3','4','5','6','7','8','9','000','0','⌫'];
+  container.innerHTML = '';
+  keys.forEach(k => {
+    const btn = document.createElement('button');
+    btn.textContent = k;
+    btn.className = (k === '⌫') ? (scope === 'rail' ? 'np-btn np-action' : 'overlay-np-btn np-action') : (scope === 'rail' ? 'np-btn' : 'overlay-np-btn');
+    btn.addEventListener('click', () => numpadPress(scope, k, displayId, saveBtnId));
+    if (k === '⌫') {
+      btn.addEventListener('dblclick', () => {
+        npState[scope].raw = '';
+        updateNumpadDisplay(scope, displayId, saveBtnId);
+      });
+    }
+    container.appendChild(btn);
+  });
+}
+
+function numpadPress(scope, key, displayId, saveBtnId) {
+  let raw = npState[scope].raw;
+  if (key === '⌫') raw = raw.slice(0, -1);
+  else if (raw.length < 12) raw += key;
+  npState[scope].raw = raw;
+  updateNumpadDisplay(scope, displayId, saveBtnId);
+}
+
+function updateNumpadDisplay(scope, displayId, saveBtnId) {
+  const raw = npState[scope].raw;
+  const num = parseInt(raw || '0', 10);
+  const display = document.getElementById(displayId);
+  display.textContent = 'Rp ' + num.toLocaleString('id-ID');
+  display.classList.toggle('has-value', num > 0);
+  document.getElementById(saveBtnId).disabled = num <= 0 || !npState[scope].cat;
+}
+
+function buildCatPills(scope, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  CATEGORIES.forEach(c => {
+    const pill = document.createElement('button');
+    pill.textContent = c.emoji + ' ' + c.label;
+    pill.className = 'cat-pill';
+    pill.onclick = () => selectCat(scope, c.label, containerId,
+      scope === 'rail' ? 'rail-save-btn' : 'overlay-save-btn',
+      scope === 'rail' ? 'rail-amount-display' : 'overlay-amount-display');
+    container.appendChild(pill);
+  });
+}
+
+function selectCat(scope, label, containerId, saveBtnId, displayId) {
+  npState[scope].cat = label;
+  document.querySelectorAll('#' + containerId + ' .cat-pill').forEach(p =>
+    p.classList.toggle('selected', p.textContent.includes(label)));
+  updateNumpadDisplay(scope, displayId, saveBtnId);
+}
+
+// ════════════════════════════════════════════════════
+//  CATAT RAIL
+// ════════════════════════════════════════════════════
+function focusRail() {/* no-op — numpad is the input */}
+
+async function saveRail() {
+  const amount = parseInt(npState.rail.raw || '0', 10);
+  const category = npState.rail.cat;
+  if (!amount || !category) return;
+  const note = document.getElementById('rail-note').value;
+  const today = new Date().toISOString().split('T')[0];
+  const r = await api('POST', '/expenses', {amount, category, note, date: today});
+  if (r && r.ok) {
+    npState.rail.raw = '';
+    npState.rail.cat = null;
+    document.getElementById('rail-note').value = '';
+    updateNumpadDisplay('rail', 'rail-amount-display', 'rail-save-btn');
+    document.querySelectorAll('#rail-cat-pills .cat-pill').forEach(p => p.classList.remove('selected'));
+    const toast = document.getElementById('rail-toast');
+    toast.style.opacity = '1';
+    setTimeout(() => toast.style.opacity = '0', 2000);
+    if (currentView === 'beranda') loadBeranda();
+    if (currentView === 'catatan') loadCatatan();
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  QUICK-ADD OVERLAY (⌘N / Ctrl+N)
+// ════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  const overlay = document.getElementById('quickadd-overlay');
+  const isOverlayOpen = !overlay.classList.contains('hidden');
+  if ((e.metaKey || e.ctrlKey) && e.key === 'n' && !isOverlayOpen) {
+    const active = document.activeElement;
+    const isInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+    if (!isInput && document.getElementById('app-shell') && !document.getElementById('app-shell').classList.contains('hidden')) {
+      e.preventDefault();
+      openOverlay();
+    }
+  }
+  if (e.key === 'Escape' && isOverlayOpen) closeOverlay();
+});
+
+function openOverlay() {
+  npState.overlay.raw = '';
+  npState.overlay.cat = null;
+  document.getElementById('overlay-amount-display').textContent = 'Rp 0';
+  document.getElementById('overlay-amount-display').classList.remove('has-value');
+  document.getElementById('overlay-note').value = '';
+  document.getElementById('overlay-save-btn').disabled = true;
+  document.querySelectorAll('#overlay-cat-pills .cat-pill').forEach(p => p.classList.remove('selected'));
+  document.getElementById('quickadd-overlay').classList.remove('hidden');
+}
+
+function closeOverlay() {
+  document.getElementById('quickadd-overlay').classList.add('hidden');
+}
+
+function overlayBgClick(e) {
+  if (e.target.id === 'quickadd-overlay') closeOverlay();
+}
+
+async function saveOverlay() {
+  const amount = parseInt(npState.overlay.raw || '0', 10);
+  const category = npState.overlay.cat;
+  if (!amount || !category) return;
+  const note = document.getElementById('overlay-note').value;
+  const today = new Date().toISOString().split('T')[0];
+  const r = await api('POST', '/expenses', {amount, category, note, date: today});
+  if (r && r.ok) {
+    closeOverlay();
+    if (currentView === 'beranda') loadBeranda();
+    if (currentView === 'catatan') loadCatatan();
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
