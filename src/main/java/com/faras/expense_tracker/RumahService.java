@@ -133,15 +133,43 @@ public class RumahService {
 
     public SharedExpense addSharedExpense(Long userId, UUID rumahId, Double amount,
                                           String category, String note, LocalDate date) {
-        throw new UnsupportedOperationException("TODO");
+        Rumah rumah = rumahRepo.findById(rumahId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        assertMember(rumah, userId);
+
+        User user = getUser(userId);
+        SharedExpense exp = new SharedExpense();
+        exp.setRumah(rumah);
+        exp.setCreatedBy(user);
+        exp.setAmount(amount);
+        exp.setCategory(category);
+        exp.setNote(note);
+        exp.setDate(date != null ? date : LocalDate.now());
+        exp.setCreatedAt(LocalDateTime.now());
+        return sharedExpRepo.save(exp);
     }
 
     public void deleteSharedExpense(Long userId, UUID rumahId, UUID expId) {
-        throw new UnsupportedOperationException("TODO");
+        Rumah rumah = rumahRepo.findById(rumahId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        assertMember(rumah, userId);
+
+        SharedExpense exp = sharedExpRepo.findById(expId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        boolean isAdmin = rumah.getAdmin().getId().equals(userId);
+        boolean isOwner = exp.getCreatedBy().getId().equals(userId);
+        if (!isAdmin && !isOwner)
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Can only delete own expenses");
+
+        sharedExpRepo.delete(exp);
     }
 
     public Page<SharedExpense> getFeed(Long userId, UUID rumahId, Pageable pageable) {
-        throw new UnsupportedOperationException("TODO");
+        Rumah rumah = rumahRepo.findById(rumahId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        assertMember(rumah, userId);
+        return sharedExpRepo.findByRumahOrderByCreatedAtDesc(rumah, pageable);
     }
 
     public List<ContributionMember> getContribution(Long userId, UUID rumahId) {

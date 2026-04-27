@@ -22,7 +22,7 @@ public class SharedExpense {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "created_by", nullable = false)
-    @JsonIgnoreProperties({"password", "provider", "googleId"})
+    @JsonIgnoreProperties({"password", "provider", "googleId", "hibernateLazyInitializer", "handler"})
     private User createdBy;
 
     private Double amount;
