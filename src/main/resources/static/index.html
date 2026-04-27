@@ -294,9 +294,25 @@
         <div id="beranda-total" style="font-family:var(--mono);font-size:36px;font-weight:700;letter-spacing:-1px">Rp 0</div>
         <div id="beranda-compare" style="display:none;margin-top:6px;font-size:13px;color:var(--text-2)"></div>
       </div>
-      <div id="beranda-insight" class="card" style="padding:14px 16px;display:none">
-        <div id="beranda-insight-text" style="font-size:13px;color:var(--text-2)"></div>
+      <div id="streak-badge"></div>
+      <div id="weekly-insight-wrap">
+        <div class="weekly-card">
+          <span id="weekly-insight-text"></span>
+          <button class="insight-dismiss" onclick="dismissWeeklyCard()">×</button>
+        </div>
       </div>
+      <div id="ramadan-suggestion" class="ramadan-suggestion">
+        <div>🌙 Ramadan sebentar lagi — aktifkan Mode Ramadan?</div>
+        <div class="ramadan-btns">
+          <button class="btn-ramadan-on" onclick="activateRamadan()">Aktifkan</button>
+          <button class="btn-ramadan-off" onclick="dismissRamadanSuggestion()">Nanti saja</button>
+        </div>
+      </div>
+      <div id="payday-banner">
+        <span style="font-size:13px">Gajian nih — yuk rencanain bulannya 💸</span>
+        <button onclick="showScreen('anggaran')" style="font-size:12px;font-weight:600;color:var(--accent);background:none;border:none;cursor:pointer">Atur Anggaran →</button>
+      </div>
+      <div id="insight-cards" class="insight-row"></div>
       <div class="section-label">Pengeluaran Terbaru</div>
       <div id="beranda-list"></div>
       <p id="beranda-empty" style="text-align:center;padding:40px 20px;color:var(--text-2);font-size:14px;display:none">
@@ -540,6 +556,103 @@
       return { from, to };
     }
 
+    // ── Phase 5: Insight Engine ──
+    function isoWeek(date = new Date()) {
+      const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+      const day = d.getUTCDay() || 7;
+      d.setUTCDate(d.getUTCDate() + 4 - day);
+      const y = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+      return `${d.getUTCFullYear()}-W${String(Math.ceil((((d - y) / 86400000) + 1) / 7)).padStart(2, '00')}`;
+    }
+
+    function getDismissed() { return JSON.parse(localStorage.getItem('catetu_dismissed_insights') || '[]'); }
+    function addDismissed(id) {
+      const d = getDismissed();
+      if (!d.includes(id)) d.push(id);
+      localStorage.setItem('catetu_dismissed_insights', JSON.stringify(d));
+    }
+    function maybeClearMonthlyDismissals() {
+      const key = 'catetu_dismissed_insights_month';
+      const now = new Date();
+      const cur = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      if (now.getDate() === 1 && localStorage.getItem(key) !== cur) {
+        localStorage.removeItem('catetu_dismissed_insights');
+        localStorage.setItem(key, cur);
+      }
+    }
+
+    function computeInsights(expenses, lastMonthTotal) {
+      maybeClearMonthlyDismissals();
+      const dismissed = getDismissed();
+      const now = new Date();
+      const daysElapsed = Math.max(now.getDate(), 1);
+      const results = [];
+
+      if (!expenses || expenses.length === 0) return results;
+
+      // top-category
+      if (!dismissed.includes('top-category')) {
+        const totals = {};
+        expenses.forEach(e => { totals[e.category] = (totals[e.category]||0) + e.amount; });
+        const [cat, amt] = Object.entries(totals).sort((a,b) => b[1]-a[1])[0];
+        results.push({ id: 'top-category', text: `Pengeluaran terbesar bulan ini: ${CATS[cat]||'📦'} ${cat} — ${formatRp(amt)}` });
+      }
+
+      // savings-vs-last (only when spending less than last month)
+      if (!dismissed.includes('savings-vs-last') && lastMonthTotal > 0) {
+        const thisTotal = expenses.reduce((s, e) => s + e.amount, 0);
+        const pct = Math.round((thisTotal / lastMonthTotal) * 100);
+        if (pct < 100) {
+          results.push({ id: 'savings-vs-last', text: `Kamu udah hemat ${100 - pct}% dibanding bulan lalu 🎉` });
+        }
+      }
+
+      // busiest-day
+      if (!dismissed.includes('busiest-day') && expenses.length >= 3) {
+        const byDay = {};
+        expenses.forEach(e => { const d = (e.date||'').substring(0,10); byDay[d] = (byDay[d]||0)+1; });
+        const [day, count] = Object.entries(byDay).sort((a,b) => b[1]-a[1])[0];
+        if (count >= 3) {
+          const label = new Date(day + 'T00:00:00').toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'short'});
+          results.push({ id: 'busiest-day', text: `Hari tersibuk: ${label} — ${count} transaksi` });
+        }
+      }
+
+      // daily-avg
+      if (!dismissed.includes('daily-avg')) {
+        const avg = Math.round(expenses.reduce((s,e)=>s+e.amount,0) / daysElapsed);
+        results.push({ id: 'daily-avg', text: `Rata-rata harian bulan ini: ${formatRp(avg)}` });
+      }
+
+      // top-frequency
+      if (!dismissed.includes('top-frequency') && expenses.length >= 5) {
+        const freq = {};
+        expenses.forEach(e => { freq[e.category] = (freq[e.category]||0)+1; });
+        const [cat, n] = Object.entries(freq).sort((a,b) => b[1]-a[1])[0];
+        if (n >= 3) results.push({ id: 'top-frequency', text: `Paling sering: ${CATS[cat]||'📦'} ${cat} (${n}x bulan ini)` });
+      }
+
+      return results.slice(0, 3);
+    }
+
+    function renderInsightCards(expenses, lastMonthTotal) {
+      const container = document.getElementById('insight-cards');
+      if (!container) return;
+      const cards = computeInsights(expenses, lastMonthTotal);
+      if (!cards.length) { container.innerHTML = ''; return; }
+      container.innerHTML = cards.map(c =>
+        `<div class="insight-card" data-insight-id="${c.id}">
+          ${escHtml(c.text)}
+          <button class="insight-dismiss" onclick="dismissInsight('${c.id}')">×</button>
+        </div>`
+      ).join('');
+    }
+
+    function dismissInsight(id) {
+      addDismissed(id);
+      document.querySelector(`.insight-card[data-insight-id="${id}"]`)?.remove();
+    }
+
     async function loadBeranda() {
       const { from, to } = monthRange();
       const { from: lf, to: lt } = monthRange(-1);
@@ -561,14 +674,8 @@
         cmp.style.display = 'block';
       }
 
-      if (expenses.length >= 3) {
-        const totals = {};
-        expenses.forEach(e => { totals[e.category] = (totals[e.category] || 0) + e.amount; });
-        const [topCat, topAmt] = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
-        document.getElementById('beranda-insight-text').textContent =
-          `${CATS[topCat] || '📦'} ${topCat} jadi pengeluaran terbesar bulan ini (${formatRp(topAmt)})`;
-        document.getElementById('beranda-insight').style.display = 'block';
-      }
+      const lastMonthTotal = lastMonth.reduce((s, e) => s + e.amount, 0);
+      renderInsightCards(expenses, lastMonthTotal);
 
       renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
     }
