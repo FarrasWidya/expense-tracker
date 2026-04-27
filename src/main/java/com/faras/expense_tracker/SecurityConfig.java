@@ -33,6 +33,7 @@ public class SecurityConfig {
                                 "/auth/**", "/oauth2/**", "/login/**",
                                 "/", "/index.html", "/desktop.html", "/favicon.ico"
                         ).permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/rumah/join/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
