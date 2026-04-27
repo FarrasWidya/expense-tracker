@@ -300,6 +300,79 @@ table.expense-table{width:100%;border-collapse:collapse;font-size:13px}
   font-size:13px;color:var(--text-muted);padding:8px 12px;
   border-top:1px solid var(--border);background:var(--surface);border-radius:0 0 10px 10px
 }
+
+/* ── Anggaran ── */
+.budget-grid{display:grid;grid-template-columns:1fr;gap:12px;max-width:640px}
+.budget-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px}
+.budget-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.budget-card-header .cat-name{font-size:15px;font-weight:600}
+.budget-card-header .amounts{font-size:13px;color:var(--text-muted)}
+.progress-wrap{position:relative;height:8px;background:var(--surface-raised);border-radius:4px;cursor:pointer}
+.progress-fill{height:100%;border-radius:4px;transition:width .3s}
+.progress-fill.ok{background:var(--accent)}
+.progress-fill.warn{background:var(--amber)}
+.progress-fill.over{background:var(--red)}
+.progress-tooltip{
+  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  background:var(--text);color:#fff;font-size:12px;padding:5px 10px;border-radius:6px;
+  white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:10
+}
+.progress-wrap:hover .progress-tooltip{opacity:1}
+.budget-meta{display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--text-muted)}
+.add-budget-btn{
+  margin-top:16px;padding:10px 20px;border:1px dashed var(--border);border-radius:8px;
+  font-size:14px;color:var(--text-muted);width:100%;max-width:640px;
+  transition:all .15s
+}
+.add-budget-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+/* ── Budget Modal ── */
+#budget-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;
+  display:flex;align-items:center;justify-content:center
+}
+#budget-modal-card{
+  width:380px;background:#fff;border-radius:12px;padding:28px;
+  box-shadow:0 8px 40px rgba(0,0,0,.15)
+}
+#budget-modal-card h3{font-size:16px;font-weight:700;margin-bottom:20px}
+.modal-footer{display:flex;gap:8px;margin-top:20px}
+.modal-save{flex:1;padding:11px;background:var(--accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600}
+.modal-cancel{padding:11px 16px;border:1px solid var(--border);border-radius:8px;font-size:14px;color:var(--text-muted)}
+
+/* ── Profil ── */
+.profil-section{background:#fff;border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px;max-width:560px}
+.profil-section h3{font-size:14px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:16px}
+.avatar-row{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.avatar-lg{
+  width:64px;height:64px;border-radius:50%;background:var(--accent);color:#fff;
+  font-size:24px;font-weight:700;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;flex-shrink:0
+}
+.avatar-lg img{width:100%;height:100%;object-fit:cover}
+.upload-btn{
+  padding:8px 14px;border:1px solid var(--border);border-radius:8px;
+  font-size:13px;font-weight:500;cursor:pointer;transition:all .15s
+}
+.upload-btn:hover{border-color:var(--accent);color:var(--accent)}
+.profil-field{margin-bottom:14px}
+.profil-field label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px}
+.profil-field input{
+  width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;
+  font-size:14px;outline:none
+}
+.profil-field input:focus{border-color:var(--accent)}
+.save-profile-btn{padding:10px 20px;background:var(--accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600}
+.export-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.export-row select,.export-row input[type=date]{
+  padding:9px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none
+}
+.export-btn{padding:9px 18px;background:var(--accent);color:#fff;border-radius:8px;font-size:14px;font-weight:600}
+.logout-btn{
+  padding:10px 20px;border:1px solid var(--red);color:var(--red);border-radius:8px;
+  font-size:14px;font-weight:500;transition:all .15s
+}
+.logout-btn:hover{background:#fff5f5}
 </style>
 </head>
 <body>
@@ -582,9 +655,196 @@ function navigate(view) {
   if (view === 'profil') loadProfil();
 }
 
-// Stubs — filled in later tasks
-function loadAnggaran() {}
-function loadProfil() {}
+// ── Anggaran ──
+function getBudgets() {
+  try { return JSON.parse(localStorage.getItem('catetu_budgets') || '[]'); } catch { return []; }
+}
+function saveBudgets(budgets) {
+  localStorage.setItem('catetu_budgets', JSON.stringify(budgets));
+}
+
+async function loadAnggaran() {
+  const view = document.getElementById('view-anggaran');
+  const now = new Date();
+  const firstDay = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  const lastDay = new Date(now.getFullYear(), now.getMonth()+1, 0).toISOString().split('T')[0];
+
+  const r = await api('GET', `/expenses?startDate=${firstDay}&endDate=${lastDay}`);
+  if (!r) return;
+  const expenses = await r.json();
+  const catTotals = {};
+  expenses.forEach(e => { catTotals[e.category] = (catTotals[e.category] || 0) + e.amount; });
+
+  const budgets = getBudgets();
+
+  const cards = budgets.length === 0
+    ? '<p style="color:var(--text-muted);font-size:14px">Belum ada anggaran. Tambah anggaran di bawah.</p>'
+    : budgets.map(b => {
+        const spent = catTotals[b.category] || 0;
+        const pct = Math.min(Math.round((spent / b.limit) * 100), 100);
+        const cls = pct >= 95 ? 'over' : pct >= 80 ? 'warn' : 'ok';
+        return `<div class="budget-card">
+          <div class="budget-card-header">
+            <span class="cat-name">${catEmoji(b.category)} ${b.category}</span>
+            <span class="amounts">${fmtRp(spent)} / ${fmtRp(b.limit)}</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-fill ${cls}" style="width:${pct}%"></div>
+            <div class="progress-tooltip">${fmtRp(spent)} dari ${fmtRp(b.limit)} (${pct}%)</div>
+          </div>
+          <div class="budget-meta">
+            <span>Sisa ${fmtRp(Math.max(b.limit - spent, 0))}</span>
+            <span>${pct}%</span>
+          </div>
+        </div>`;
+      }).join('');
+
+  view.innerHTML = `
+    <div class="view-title">Anggaran</div>
+    <div class="view-subtitle">Bulan ${now.toLocaleDateString('id-ID',{month:'long',year:'numeric'})}</div>
+    <div class="budget-grid">${cards}</div>
+    <button class="add-budget-btn" onclick="openBudgetModal()">+ Atur Anggaran</button>
+    <div id="budget-modal" class="hidden" onclick="if(event.target.id==='budget-modal')closeBudgetModal()">
+      <div id="budget-modal-card">
+        <h3>Atur Anggaran</h3>
+        <div class="profil-field">
+          <label>Kategori</label>
+          <select id="bm-cat" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none">
+            ${CATEGORIES.map(c=>`<option value="${c.label}">${c.emoji} ${c.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="profil-field">
+          <label>Batas Bulanan (Rp)</label>
+          <input type="number" id="bm-limit" placeholder="500000">
+        </div>
+        <div class="modal-footer">
+          <button class="modal-cancel" onclick="closeBudgetModal()">Batal</button>
+          <button class="modal-save" onclick="saveBudgetModal()">Simpan</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function openBudgetModal() {
+  document.getElementById('budget-modal').classList.remove('hidden');
+}
+function closeBudgetModal() {
+  document.getElementById('budget-modal').classList.add('hidden');
+}
+function saveBudgetModal() {
+  const cat = document.getElementById('bm-cat').value;
+  const limit = parseFloat(document.getElementById('bm-limit').value);
+  if (!cat || !limit || limit <= 0) return;
+  const budgets = getBudgets().filter(b => b.category !== cat);
+  budgets.push({ category: cat, limit });
+  saveBudgets(budgets);
+  closeBudgetModal();
+  loadAnggaran();
+}
+
+// ── Profil ──
+async function loadProfil() {
+  const view = document.getElementById('view-profil');
+  const r = await api('GET', '/auth/me');
+  if (!r) return;
+  const user = await r.json();
+
+  const avatarHtml = user.hasAvatar
+    ? `<img src="${user.avatarData || ''}" alt="avatar">`
+    : user.avatarInitials || '?';
+
+  view.innerHTML = `
+    <div class="view-title">Profil & Pengaturan</div>
+    <div class="profil-section">
+      <h3>Akun</h3>
+      <div class="avatar-row">
+        <div class="avatar-lg" id="profil-avatar">${avatarHtml}</div>
+        <div>
+          <label class="upload-btn" for="avatar-file-input">Unggah Foto</label>
+          <input type="file" id="avatar-file-input" accept="image/*" style="display:none" onchange="uploadAvatar(this)">
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Maks. 500KB</div>
+        </div>
+      </div>
+      <div class="profil-field">
+        <label>Nama Tampilan</label>
+        <input id="profil-name" type="text" value="${user.name || ''}" placeholder="Nama kamu">
+      </div>
+      <div class="profil-field">
+        <label>Email</label>
+        <input type="text" value="${user.email}" disabled style="background:var(--surface-raised)">
+      </div>
+      <button class="save-profile-btn" onclick="saveProfile()">Simpan</button>
+    </div>
+    <div class="profil-section">
+      <h3>Export Data</h3>
+      <div class="export-row">
+        <select id="export-format">
+          <option value="csv">CSV</option>
+          <option value="json">JSON</option>
+          <option value="excel">Excel (.xlsx)</option>
+        </select>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px">Dari</label>
+          <input type="date" id="export-start">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--text-muted);display:block;margin-bottom:4px">Sampai</label>
+          <input type="date" id="export-end" value="${new Date().toISOString().split('T')[0]}">
+        </div>
+        <button class="export-btn" onclick="doExport()">Export</button>
+      </div>
+    </div>
+    <div class="profil-section">
+      <h3>Sesi</h3>
+      <button class="logout-btn" onclick="if(confirm('Keluar dari akun?'))logout()">Keluar</button>
+    </div>`;
+}
+
+async function saveProfile() {
+  const name = document.getElementById('profil-name').value;
+  const r = await api('PATCH', '/auth/me', { name });
+  if (r && r.ok) {
+    currentUser = await r.json();
+    updateSidebarUser();
+    alert('Profil tersimpan!');
+  }
+}
+
+async function uploadAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 500000) { alert('Ukuran file maksimal 500KB.'); return; }
+  const formData = new FormData();
+  formData.append('file', file);
+  const r = await fetch('/auth/avatar', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token },
+    body: formData,
+  });
+  if (r.ok) {
+    currentUser = await r.json();
+    updateSidebarUser();
+    loadProfil();
+  }
+}
+
+async function doExport() {
+  const format = document.getElementById('export-format').value;
+  const start = document.getElementById('export-start').value;
+  const end = document.getElementById('export-end').value;
+  let url = `/expenses/export?format=${format}`;
+  if (start) url += `&startDate=${start}`;
+  if (end) url += `&endDate=${end}`;
+  const r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+  if (!r.ok) { alert('Export gagal.'); return; }
+  const blob = await r.blob();
+  const ext = format === 'excel' ? 'xlsx' : format;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `expenses.${ext}`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
 let catanatState = {
   expenses: [],
