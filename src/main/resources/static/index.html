@@ -166,6 +166,8 @@
     .expense-row-amount { font-family: var(--mono); font-size: 14px; font-weight: 700; white-space: nowrap; }
     .day-group-header { padding: 8px 16px 4px; font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; }
     .day-group { background: var(--surface); margin: 0 16px 8px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
+    .placeholder-row { opacity: 0.35; pointer-events: none; }
+    .placeholder-badge { display: inline-block; margin: 8px 16px 4px; padding: 4px 12px; background: var(--accent-dim); color: var(--accent); border-radius: 20px; font-size: 11px; font-weight: 600; }
 
     /* BERANDA HERO CARD */
     .hero-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text-2); margin-bottom: 6px; }
@@ -1028,7 +1030,30 @@
       checkPaydayBanner();
       checkRamadanSuggestion();
 
-      renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
+      if (expenses.length === 0) {
+        document.getElementById('beranda-empty').style.display = 'none';
+        const placeholders = [
+          { emoji: '🍽️', name: 'Makan siang', cat: 'Makan & Minum', amount: 35000 },
+          { emoji: '🛵', name: 'Bensin motor', cat: 'Transportasi', amount: 50000 },
+          { emoji: '🛍️', name: 'Belanja bulanan', cat: 'Belanja', amount: 120000 },
+        ];
+        document.getElementById('beranda-list').innerHTML =
+          `<div class="placeholder-badge">Contoh catatan</div>` +
+          `<div class="day-group placeholder-row">` +
+          placeholders.map(p => `
+            <div class="expense-row">
+              <div class="expense-icon">${p.emoji}</div>
+              <div class="expense-row-body">
+                <div class="expense-row-name">${p.name}</div>
+                <div class="expense-row-cat">${p.cat}</div>
+              </div>
+              <div class="expense-row-amount">${formatRp(p.amount)}</div>
+            </div>`).join('') +
+          `</div>` +
+          `<p style="text-align:center;padding:16px 20px 8px;color:var(--text-2);font-size:13px">Belum ada catatan. Ketuk <strong>+</strong> untuk mulai!</p>`;
+      } else {
+        renderDayGroups(expenses.slice(0, 20), 'beranda-list', 'beranda-empty');
+      }
     }
 
     function renderDayGroups(expenses, listId, emptyId) {
