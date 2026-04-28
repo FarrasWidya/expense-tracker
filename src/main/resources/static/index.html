@@ -84,11 +84,31 @@
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,.5); z-index: 200;
       align-items: center; justify-content: center;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     }
     #auth-overlay.open { display: flex; }
     #auth-box {
       background: var(--surface); border-radius: 16px;
       padding: 32px 24px; width: 340px; max-width: calc(100vw - 32px);
+      position: relative;
+    }
+    #auth-cancel-btn {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: none; font-size: 22px;
+      color: var(--text-2); cursor: pointer; line-height: 1; padding: 4px 6px;
+    }
+    /* LOGOUT MODAL */
+    #logout-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 600;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    #logout-modal-overlay.open { display: flex; }
+    #logout-modal-box {
+      background: var(--surface); border-radius: 20px;
+      padding: 28px 24px; width: 300px; max-width: calc(100vw - 40px);
+      text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,.18);
     }
     #auth-box h1 { font-size: 22px; font-weight: 700; margin-bottom: 20px; color: var(--accent); text-align: center; }
     .auth-tabs { display: flex; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
@@ -275,6 +295,7 @@
   <!-- AUTH OVERLAY -->
   <div id="auth-overlay">
     <div id="auth-box">
+      <button id="auth-cancel-btn" onclick="cancelAuth()">×</button>
       <h1>CatetU</h1>
       <div class="auth-tabs">
         <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Masuk</button>
@@ -297,7 +318,7 @@
   </div>
 
   <!-- LANDING -->
-  <div id="landing" style="display:none; flex-direction:column; min-height:100dvh; padding:24px 24px 40px; background:var(--surface)">
+  <div id="landing" style="display:none; flex-direction:column; min-height:100dvh; padding:24px 24px 40px; background:radial-gradient(ellipse at 115% -10%, rgba(0,137,123,0.22) 0%, transparent 45%), radial-gradient(ellipse at -15% 95%, rgba(0,137,123,0.15) 0%, transparent 42%), linear-gradient(160deg, #E0F2F1 0%, #F3FAF8 40%, #FAFAF8 100%)">
     <div style="display:flex; justify-content:flex-end">
       <button onclick="openAuthModal('login')" style="padding:8px 18px; border:1.5px solid var(--border); border-radius:8px; background:none; font-size:14px; font-weight:600; color:var(--text)">Masuk</button>
     </div>
@@ -534,8 +555,8 @@
       <button class="tab" data-screen="catatan"><span class="ti">📋</span><span>Catatan</span></button>
       <div class="tab-gap"></div>
       <button class="tab" data-screen="anggaran"><span class="ti">💰</span><span>Anggaran</span></button>
-      <button class="tab" data-screen="profil"><span class="ti">👤</span><span>Profil</span></button>
       <button class="tab" data-screen="rumah"><span class="ti">🏘️</span><span>Rumah</span></button>
+      <button class="tab" data-screen="profil"><span class="ti">👤</span><span>Profil</span></button>
     </nav>
     <button id="fab">+</button>
 
@@ -555,6 +576,19 @@
         <button class="monthly-close" onclick="closeMonthlySummary()">Tutup</button>
       </div>
     </div>
+    <!-- LOGOUT CONFIRM MODAL -->
+    <div id="logout-modal-overlay">
+      <div id="logout-modal-box">
+        <div style="font-size:36px; margin-bottom:12px">👋</div>
+        <div style="font-size:17px; font-weight:700; margin-bottom:8px">Yakin mau keluar?</div>
+        <div style="font-size:13px; color:var(--text-2); margin-bottom:24px">Kamu bisa masuk lagi kapan saja.</div>
+        <div style="display:flex; gap:10px">
+          <button onclick="cancelLogout()" style="flex:1; padding:12px; background:var(--raised); border:1px solid var(--border); border-radius:10px; font-size:14px; font-weight:600; color:var(--text); cursor:pointer">Batal</button>
+          <button onclick="confirmLogout()" style="flex:1; padding:12px; background:var(--danger); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer">Keluar</button>
+        </div>
+      </div>
+    </div>
+
     <div id="sheet-overlay"></div>
     <div id="quick-add-sheet">
       <div id="sheet-handle"></div>
@@ -583,7 +617,7 @@
         <label style="position:relative; width:44px; height:24px; cursor:pointer; flex-shrink:0">
           <input type="checkbox" id="bareng-checkbox" onchange="onBarengToggle()" style="opacity:0; position:absolute; width:0; height:0">
           <span id="bareng-switch" style="position:absolute; inset:0; background:var(--divider); border-radius:24px; transition:background 0.2s">
-            <span style="position:absolute; left:2px; top:2px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2)"></span>
+            <span id="bareng-thumb" style="position:absolute; left:2px; top:2px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2); transition:left 0.2s"></span>
           </span>
         </label>
       </div>
@@ -656,10 +690,20 @@
     }
 
     function showAuthError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+    function cancelAuth() {
+      hideAuthOverlay();
+      if (!getToken()) showLanding();
+    }
     function logout() {
-      if (!confirm('Yakin mau keluar?')) return;
+      document.getElementById('logout-modal-overlay').classList.add('open');
+    }
+    function confirmLogout() {
+      document.getElementById('logout-modal-overlay').classList.remove('open');
       clearToken();
       showLanding();
+    }
+    function cancelLogout() {
+      document.getElementById('logout-modal-overlay').classList.remove('open');
     }
 
     // TAB ROUTER
@@ -680,6 +724,7 @@
       document.getElementById('app').classList.add('visible');
       hideAuthOverlay();
       loadBeranda();
+      loadRumahTab(); // pre-load so bareng toggle works without visiting Rumah tab first
     }
 
     // ?token= pickup (Google OAuth)
@@ -1649,10 +1694,13 @@
       if (!row) return;
       if (currentRumah) {
         row.style.display = 'flex';
-        const names = (currentRumah.members || [])
-          .map(m => (m.name || '?').split(' ')[0])
-          .join(', ');
-        document.getElementById('bareng-members-preview').textContent = names;
+        const memberNames = (currentRumah.members || [])
+          .map(m => (m.name ? m.name.split(' ')[0] : null))
+          .filter(Boolean);
+        const preview = memberNames.length
+          ? memberNames.join(', ')
+          : currentRumah.name || 'Rumah';
+        document.getElementById('bareng-members-preview').textContent = preview;
       } else {
         row.style.display = 'none';
       }
@@ -1680,6 +1728,8 @@
       const sw = document.getElementById('bareng-switch');
       if (!cb || !sw) return;
       sw.style.background = cb.checked ? 'var(--accent)' : 'var(--divider)';
+      const thumb = document.getElementById('bareng-thumb');
+      if (thumb) thumb.style.left = cb.checked ? '22px' : '2px';
     }
 
     // Wire Rumah tab data load and polling lifecycle
