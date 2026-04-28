@@ -167,6 +167,20 @@
     .day-group-header { padding: 8px 16px 4px; font-size: 12px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; }
     .day-group { background: var(--surface); margin: 0 16px 8px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); }
 
+    /* BERANDA HERO CARD */
+    .hero-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text-2); margin-bottom: 6px; }
+    .hero-amount { font-family: var(--mono); font-size: 38px; font-weight: 700; letter-spacing: -1.5px; color: var(--text); line-height: 1; margin-bottom: 12px; }
+    .hero-stats-row { display: flex; gap: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .hero-stat { flex: 1; }
+    .hero-stat-label { font-size: 11px; color: var(--text-2); margin-bottom: 2px; }
+    .hero-stat-value { font-family: var(--mono); font-size: 14px; font-weight: 700; color: var(--text); }
+    .hero-cat-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .hero-cat-row:last-child { border-bottom: none; }
+    .hero-cat-label { font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 6px; }
+    .hero-cat-bar-wrap { flex: 1; height: 4px; background: var(--border); border-radius: 2px; margin: 0 10px; }
+    .hero-cat-bar { height: 100%; background: var(--accent); border-radius: 2px; }
+    .hero-cat-amount { font-family: var(--mono); font-size: 12px; color: var(--text-2); white-space: nowrap; }
+
     /* QUICK-ADD SHEET */
     #sheet-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,.4);
@@ -358,10 +372,20 @@
   <div id="app">
     <section id="screen-beranda" class="screen active">
       <div class="page-header">Beranda</div>
-      <div class="card" style="padding:20px 20px 16px">
-        <div style="font-size:12px;color:var(--text-2);margin-bottom:4px">Bulan ini</div>
-        <div id="beranda-total" style="font-family:var(--mono);font-size:36px;font-weight:700;letter-spacing:-1px">Rp 0</div>
-        <div id="beranda-compare" style="display:none;margin-top:6px;font-size:13px;color:var(--text-2)"></div>
+      <div class="card" style="padding:20px">
+        <div class="hero-label">Pengeluaran bulan ini</div>
+        <div id="beranda-total" class="hero-amount">Rp 0</div>
+        <div id="beranda-cat-breakdown" style="margin-bottom:12px"></div>
+        <div class="hero-stats-row">
+          <div class="hero-stat">
+            <div class="hero-stat-label">Rata-rata/hari</div>
+            <div id="beranda-avg" class="hero-stat-value">—</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-label">Bulan lalu</div>
+            <div id="beranda-compare" class="hero-stat-value">—</div>
+          </div>
+        </div>
       </div>
       <div id="streak-badge"></div>
       <div id="weekly-insight-wrap">
@@ -959,10 +983,38 @@
 
       document.getElementById('beranda-total').textContent = formatRp(total);
 
+      // Avg per day
+      const avgEl = document.getElementById('beranda-avg');
+      if (avgEl) {
+        const dayOfMonth = new Date().getDate();
+        const avg = dayOfMonth > 0 ? total / dayOfMonth : 0;
+        avgEl.textContent = total > 0 ? formatRp(avg) : '—';
+      }
+
+      // Category breakdown — top 3
+      const breakdownEl = document.getElementById('beranda-cat-breakdown');
+      if (breakdownEl && expenses.length > 0) {
+        const catTotals = {};
+        expenses.forEach(e => { catTotals[e.category] = (catTotals[e.category] || 0) + e.amount; });
+        const sorted = Object.entries(catTotals).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        const max = sorted[0]?.[1] || 1;
+        breakdownEl.innerHTML = sorted.map(([cat, amt]) => {
+          const pct = Math.round((amt / max) * 100);
+          return `<div class="hero-cat-row">
+            <div class="hero-cat-label">${CATS[cat] || '📦'} <span style="font-size:12px;color:var(--text-2)">${escHtml(cat)}</span></div>
+            <div class="hero-cat-bar-wrap"><div class="hero-cat-bar" style="width:${pct}%"></div></div>
+            <div class="hero-cat-amount">${formatRp(amt)}</div>
+          </div>`;
+        }).join('');
+      } else if (breakdownEl) {
+        breakdownEl.innerHTML = '';
+      }
+
       const cmp = document.getElementById('beranda-compare');
       if (lastTotal > 0) {
         cmp.textContent = `${Math.round((total / lastTotal) * 100)}% dari bulan lalu`;
-        cmp.style.display = 'block';
+      } else {
+        cmp.textContent = '—';
       }
 
       const lastMonthTotal = lastMonth.reduce((s, e) => s + e.amount, 0);
