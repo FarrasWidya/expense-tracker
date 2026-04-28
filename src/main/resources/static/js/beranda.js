@@ -162,6 +162,15 @@ function renderStreak(expenses) {
 }
 
 async function loadBeranda() {
+  // Greeting
+  const greetName = document.getElementById('beranda-greeting-name');
+  if (greetName) greetName.textContent = getNickname() || 'Kamu';
+  const greetDate = document.getElementById('beranda-greeting-date');
+  if (greetDate) {
+    const now = new Date();
+    greetDate.textContent = now.toLocaleDateString('id-ID', { weekday:'long', day:'numeric', month:'long' });
+  }
+
   const { from, to } = monthRange();
   const { from: lf, to: lt } = monthRange(-1);
   const [r1, r2] = await Promise.all([

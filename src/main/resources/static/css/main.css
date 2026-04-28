@@ -299,3 +299,31 @@
     .monthly-total { font-family: var(--mono); font-size: 28px; font-weight: 700; margin: 8px 0 16px; }
     .monthly-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,.06); font-size: 14px; }
     .monthly-close { width: 100%; padding: 14px; background: var(--accent); color: #fff; border-radius: 10px; font-weight: 600; font-size: 15px; margin-top: 20px; border: none; cursor: pointer; }
+
+/* BERANDA GREETING */
+.beranda-greeting {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 20px 16px 8px;
+}
+.beranda-greeting-left { flex: 1; }
+.beranda-greeting-name {
+  font-size: 22px; font-weight: 700; color: var(--text); line-height: 1.2;
+}
+.beranda-greeting-date { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+
+/* BERANDA HERO GRADIENT */
+.hero-card-gradient {
+  margin: 0 16px 12px; border-radius: 20px; padding: 20px;
+  background: linear-gradient(135deg, var(--accent) 0%, #00695C 100%);
+  color: #fff; position: relative; overflow: hidden;
+}
+.hero-card-gradient::after {
+  content: ''; position: absolute; top: -30px; right: -30px;
+  width: 120px; height: 120px; border-radius: 50%;
+  background: rgba(255,255,255,.08);
+}
+.hero-card-gradient .hero-label { color: rgba(255,255,255,.75); }
+.hero-card-gradient .hero-amount { color: #fff; }
+.hero-card-gradient .hero-stats-row { border-top-color: rgba(255,255,255,.2); }
+.hero-card-gradient .hero-stat-label { color: rgba(255,255,255,.75); }
+.hero-card-gradient .hero-stat-value { color: #fff; }
