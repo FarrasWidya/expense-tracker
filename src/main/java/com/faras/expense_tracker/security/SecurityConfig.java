@@ -31,7 +31,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/auth/**", "/oauth2/**", "/login/**",
-                                "/", "/index.html", "/desktop.html", "/favicon.ico"
+                                "/", "/index.html", "/desktop.html", "/favicon.ico",
+                                "/css/**", "/js/**"
                         ).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/rumah/join/**").permitAll()
                         .anyRequest().authenticated()
