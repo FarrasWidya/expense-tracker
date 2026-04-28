@@ -84,11 +84,31 @@
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,.5); z-index: 200;
       align-items: center; justify-content: center;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     }
     #auth-overlay.open { display: flex; }
     #auth-box {
       background: var(--surface); border-radius: 16px;
       padding: 32px 24px; width: 340px; max-width: calc(100vw - 32px);
+      position: relative;
+    }
+    #auth-cancel-btn {
+      position: absolute; top: 12px; right: 14px;
+      background: none; border: none; font-size: 22px;
+      color: var(--text-2); cursor: pointer; line-height: 1; padding: 4px 6px;
+    }
+    /* LOGOUT MODAL */
+    #logout-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.5); z-index: 600;
+      align-items: center; justify-content: center;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    #logout-modal-overlay.open { display: flex; }
+    #logout-modal-box {
+      background: var(--surface); border-radius: 20px;
+      padding: 28px 24px; width: 300px; max-width: calc(100vw - 40px);
+      text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,.18);
     }
     #auth-box h1 { font-size: 22px; font-weight: 700; margin-bottom: 20px; color: var(--accent); text-align: center; }
     .auth-tabs { display: flex; margin-bottom: 20px; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
@@ -275,6 +295,7 @@
   <!-- AUTH OVERLAY -->
   <div id="auth-overlay">
     <div id="auth-box">
+      <button id="auth-cancel-btn" onclick="cancelAuth()">×</button>
       <h1>CatetU</h1>
       <div class="auth-tabs">
         <button class="auth-tab active" id="tab-login" onclick="showTab('login')">Masuk</button>
@@ -293,6 +314,38 @@
       <input id="auth-password" type="password" placeholder="Password" autocomplete="current-password">
       <button id="auth-submit-btn" onclick="submitAuth()">Masuk</button>
       <div id="auth-error"></div>
+    </div>
+  </div>
+
+  <!-- LANDING -->
+  <div id="landing" style="display:none; flex-direction:column; min-height:100dvh; padding:24px 24px 40px; background:radial-gradient(ellipse at 115% -10%, rgba(0,137,123,0.22) 0%, transparent 45%), radial-gradient(ellipse at -15% 95%, rgba(0,137,123,0.15) 0%, transparent 42%), linear-gradient(160deg, #E0F2F1 0%, #F3FAF8 40%, #FAFAF8 100%)">
+    <div style="display:flex; justify-content:flex-end">
+      <button onclick="openAuthModal('login')" style="padding:8px 18px; border:1.5px solid var(--border); border-radius:8px; background:none; font-size:14px; font-weight:600; color:var(--text)">Masuk</button>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:32px; padding:40px 0 20px">
+      <div>
+        <div style="font-size:52px; margin-bottom:12px">📒</div>
+        <h1 style="font-size:30px; font-weight:800; color:var(--accent); margin-bottom:10px">CatetU</h1>
+        <p style="font-size:15px; color:var(--text-2); line-height:1.6">Catat uang buat kamu, pasangan, dan keluarga. Cepat, ringan, Rupiah.</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:18px">
+        <div style="display:flex; align-items:center; gap:14px">
+          <span style="font-size:26px">⚡</span>
+          <div><div style="font-weight:600; font-size:14px">4 ketukan, kurang dari 5 detik</div><div style="font-size:12px; color:var(--text-2); margin-top:2px">Numpad pintar, kategori lokal Indonesia</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px">
+          <span style="font-size:26px">🏠</span>
+          <div><div style="font-weight:600; font-size:14px">Catat bareng Rumah</div><div style="font-size:12px; color:var(--text-2); margin-top:2px">Invite anggota, lihat kontribusi bersama</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px">
+          <span style="font-size:26px">📊</span>
+          <div><div style="font-weight:600; font-size:14px">Insight otomatis tiap minggu</div><div style="font-size:12px; color:var(--text-2); margin-top:2px">Ringkasan bulan, perbandingan, anggaran</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px">
+      <button onclick="openAuthModal('register')" style="width:100%; padding:16px; background:var(--accent); color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700">Daftar Sekarang</button>
+      <button onclick="openAuthModal('login')" style="width:100%; padding:14px; background:none; border:1.5px solid var(--border); border-radius:12px; font-size:15px; font-weight:600; color:var(--text)">Sudah punya akun? Masuk</button>
     </div>
   </div>
 
@@ -394,7 +447,7 @@
         <div id="profil-avatar" style="
           width:56px;height:56px;border-radius:50%;background:var(--accent);
           color:#fff;font-size:22px;font-weight:700;display:flex;align-items:center;
-          justify-content:center;flex-shrink:0">?</div>
+          justify-content:center;flex-shrink:0">👤</div>
         <div>
           <div id="profil-email" style="font-weight:600;font-size:15px">—</div>
           <div style="font-size:12px;color:var(--text-2);margin-top:2px">Akun lokal</div>
@@ -406,8 +459,8 @@
         <div class="settings-row">
           <span>Tema</span>
           <div style="display:flex;gap:6px">
-            <button class="theme-btn" data-theme="light">☀️ Terang</button>
-            <button class="theme-btn" data-theme="dark">🌙 Gelap</button>
+            <button class="theme-btn" data-pick-theme="light">☀️ Terang</button>
+            <button class="theme-btn" data-pick-theme="dark">🌙 Gelap</button>
           </div>
         </div>
       </div>
@@ -502,8 +555,8 @@
       <button class="tab" data-screen="catatan"><span class="ti">📋</span><span>Catatan</span></button>
       <div class="tab-gap"></div>
       <button class="tab" data-screen="anggaran"><span class="ti">💰</span><span>Anggaran</span></button>
-      <button class="tab" data-screen="profil"><span class="ti">👤</span><span>Profil</span></button>
       <button class="tab" data-screen="rumah"><span class="ti">🏘️</span><span>Rumah</span></button>
+      <button class="tab" data-screen="profil"><span class="ti">👤</span><span>Profil</span></button>
     </nav>
     <button id="fab">+</button>
 
@@ -523,6 +576,19 @@
         <button class="monthly-close" onclick="closeMonthlySummary()">Tutup</button>
       </div>
     </div>
+    <!-- LOGOUT CONFIRM MODAL -->
+    <div id="logout-modal-overlay">
+      <div id="logout-modal-box">
+        <div style="font-size:36px; margin-bottom:12px">👋</div>
+        <div style="font-size:17px; font-weight:700; margin-bottom:8px">Yakin mau keluar?</div>
+        <div style="font-size:13px; color:var(--text-2); margin-bottom:24px">Kamu bisa masuk lagi kapan saja.</div>
+        <div style="display:flex; gap:10px">
+          <button onclick="cancelLogout()" style="flex:1; padding:12px; background:var(--raised); border:1px solid var(--border); border-radius:10px; font-size:14px; font-weight:600; color:var(--text); cursor:pointer">Batal</button>
+          <button onclick="confirmLogout()" style="flex:1; padding:12px; background:var(--danger); color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer">Keluar</button>
+        </div>
+      </div>
+    </div>
+
     <div id="sheet-overlay"></div>
     <div id="quick-add-sheet">
       <div id="sheet-handle"></div>
@@ -551,7 +617,7 @@
         <label style="position:relative; width:44px; height:24px; cursor:pointer; flex-shrink:0">
           <input type="checkbox" id="bareng-checkbox" onchange="onBarengToggle()" style="opacity:0; position:absolute; width:0; height:0">
           <span id="bareng-switch" style="position:absolute; inset:0; background:var(--divider); border-radius:24px; transition:background 0.2s">
-            <span style="position:absolute; left:2px; top:2px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2)"></span>
+            <span id="bareng-thumb" style="position:absolute; left:2px; top:2px; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2); transition:left 0.2s"></span>
           </span>
         </label>
       </div>
@@ -577,6 +643,15 @@
     // AUTH
     function showAuthOverlay() { document.getElementById('auth-overlay').classList.add('open'); }
     function hideAuthOverlay() { document.getElementById('auth-overlay').classList.remove('open'); }
+    function showLanding() {
+      document.getElementById('landing').style.display = 'flex';
+      document.getElementById('app').classList.remove('visible');
+      hideAuthOverlay();
+    }
+    function openAuthModal(tab) {
+      showTab(tab);
+      showAuthOverlay();
+    }
 
     function showTab(tab) {
       document.getElementById('tab-login').classList.toggle('active', tab === 'login');
@@ -615,7 +690,21 @@
     }
 
     function showAuthError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
-    function logout() { clearToken(); showAuthOverlay(); }
+    function cancelAuth() {
+      hideAuthOverlay();
+      if (!getToken()) showLanding();
+    }
+    function logout() {
+      document.getElementById('logout-modal-overlay').classList.add('open');
+    }
+    function confirmLogout() {
+      document.getElementById('logout-modal-overlay').classList.remove('open');
+      clearToken();
+      showLanding();
+    }
+    function cancelLogout() {
+      document.getElementById('logout-modal-overlay').classList.remove('open');
+    }
 
     // TAB ROUTER
     function showScreen(name) {
@@ -631,15 +720,18 @@
 
     // ENTRY POINT
     function onAppReady() {
+      document.getElementById('landing').style.display = 'none';
       document.getElementById('app').classList.add('visible');
+      hideAuthOverlay();
       loadBeranda();
+      loadRumahTab(); // pre-load so bareng toggle works without visiting Rumah tab first
     }
 
     // ?token= pickup (Google OAuth)
     const urlToken = new URLSearchParams(location.search).get('token');
     if (urlToken) { setToken(urlToken); history.replaceState({}, '', '/'); }
 
-    if (getToken()) { onAppReady(); } else { showAuthOverlay(); }
+    if (getToken()) { onAppReady(); } else { showLanding(); }
 
     const CATS = {
       'Makan & Minum':'🍽️','Transportasi':'🛵','Kos & Rumah':'🏠',
@@ -947,6 +1039,8 @@
     function closeSheet() {
       document.getElementById('quick-add-sheet').classList.remove('open');
       document.getElementById('sheet-overlay').style.display = 'none';
+      const btn = document.getElementById('sheet-simpan');
+      if (btn) { btn.textContent = 'Simpan'; btn.style.background = ''; }
     }
 
     document.getElementById('sheet-overlay').addEventListener('click', closeSheet);
@@ -1395,9 +1489,9 @@
     function applyTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
       localStorage.setItem('catetu_theme', theme);
-      document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.pickTheme === theme));
     }
-    document.querySelectorAll('.theme-btn').forEach(btn => btn.addEventListener('click', () => applyTheme(btn.dataset.theme)));
+    document.querySelectorAll('.theme-btn').forEach(btn => btn.addEventListener('click', () => applyTheme(btn.dataset.pickTheme)));
     applyTheme(localStorage.getItem('catetu_theme') || 'light');
 
     document.querySelector('.tab[data-screen="profil"]').addEventListener('click', loadProfil);
@@ -1600,10 +1694,13 @@
       if (!row) return;
       if (currentRumah) {
         row.style.display = 'flex';
-        const names = (currentRumah.members || [])
-          .map(m => (m.name || '?').split(' ')[0])
-          .join(', ');
-        document.getElementById('bareng-members-preview').textContent = names;
+        const memberNames = (currentRumah.members || [])
+          .map(m => (m.name ? m.name.split(' ')[0] : null))
+          .filter(Boolean);
+        const preview = memberNames.length
+          ? memberNames.join(', ')
+          : currentRumah.name || 'Rumah';
+        document.getElementById('bareng-members-preview').textContent = preview;
       } else {
         row.style.display = 'none';
       }
@@ -1614,6 +1711,16 @@
 
     function onBarengToggle() {
       updateBarengSwitchStyle();
+      const cb = document.getElementById('bareng-checkbox');
+      const btn = document.getElementById('sheet-simpan');
+      if (!btn) return;
+      if (cb?.checked) {
+        btn.textContent = 'Simpan ke Rumah 🏠';
+        btn.style.background = '#00695C';
+      } else {
+        btn.textContent = 'Simpan';
+        btn.style.background = '';
+      }
     }
 
     function updateBarengSwitchStyle() {
@@ -1621,6 +1728,8 @@
       const sw = document.getElementById('bareng-switch');
       if (!cb || !sw) return;
       sw.style.background = cb.checked ? 'var(--accent)' : 'var(--divider)';
+      const thumb = document.getElementById('bareng-thumb');
+      if (thumb) thumb.style.left = cb.checked ? '22px' : '2px';
     }
 
     // Wire Rumah tab data load and polling lifecycle
