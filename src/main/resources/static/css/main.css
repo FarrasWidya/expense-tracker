@@ -66,7 +66,7 @@
       left: 50%; transform: translateX(-50%);
       width: 60px; height: 60px; border-radius: 50%;
       background: var(--accent); color: #fff;
-      font-size: 30px; line-height: 1; border: none;
+      font-size: 30px; line-height: 1; padding-bottom: 3px; border: none;
       box-shadow: 0 4px 16px rgba(0,137,123,.4);
       z-index: 101; display: flex; align-items: center; justify-content: center;
       transition: transform .15s;
@@ -192,14 +192,19 @@
       text-align: center; font-family: var(--mono);
       font-size: 40px; font-weight: 700; letter-spacing: -1px; padding: 4px 0; flex-shrink: 0;
     }
-    #sheet-cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 0; flex-shrink: 0; }
-    .cat-pill {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 2px; padding: 7px 4px; border-radius: 10px;
-      border: 1.5px solid var(--border); background: none;
-      font-size: 10px; color: var(--text-2); text-align: center; line-height: 1.2;
+    #sheet-cats {
+      display: flex; flex-direction: row; overflow-x: auto; gap: 8px;
+      padding: 2px 0 6px; flex-shrink: 0;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none;
     }
-    .cat-pill .cat-emoji { font-size: 19px; line-height: 1; }
+    #sheet-cats::-webkit-scrollbar { display: none; }
+    .cat-pill {
+      display: flex; flex-direction: row; align-items: center; flex-shrink: 0;
+      gap: 6px; padding: 8px 12px; border-radius: 20px;
+      border: 1.5px solid var(--border); background: none;
+      font-size: 13px; color: var(--text-2); white-space: nowrap;
+    }
+    .cat-pill .cat-emoji { font-size: 16px; line-height: 1; }
     .cat-pill.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); font-weight: 600; }
     #sheet-note input {
       width: 100%; padding: 10px 14px; border-radius: 10px;
@@ -328,8 +333,8 @@
 .hero-card-gradient .hero-stat-label { color: rgba(255,255,255,.75); }
 .hero-card-gradient .hero-stat-value { color: #fff; }
 .hero-card-gradient .hero-cat-row { border-bottom-color: rgba(255,255,255,.15); }
-.hero-card-gradient .hero-cat-label { color: rgba(255,255,255,.92); }
-.hero-card-gradient .hero-cat-amount { color: rgba(255,255,255,.92); }
+.hero-card-gradient .hero-cat-label { color: #fff; }
+.hero-card-gradient .hero-cat-amount { color: #fff; }
 .hero-card-gradient .hero-cat-bar-wrap { background: rgba(255,255,255,.2); }
 .hero-card-gradient .hero-cat-bar { background: rgba(255,255,255,.75); }
 
