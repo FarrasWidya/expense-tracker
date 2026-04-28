@@ -296,6 +296,38 @@
     </div>
   </div>
 
+  <!-- LANDING -->
+  <div id="landing" style="display:none; flex-direction:column; min-height:100dvh; padding:24px 24px 40px; background:var(--surface)">
+    <div style="display:flex; justify-content:flex-end">
+      <button onclick="openAuthModal('login')" style="padding:8px 18px; border:1.5px solid var(--border); border-radius:8px; background:none; font-size:14px; font-weight:600; color:var(--text)">Masuk</button>
+    </div>
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:32px; padding:40px 0 20px">
+      <div>
+        <div style="font-size:52px; margin-bottom:12px">📒</div>
+        <h1 style="font-size:30px; font-weight:800; color:var(--accent); margin-bottom:10px">CatetU</h1>
+        <p style="font-size:15px; color:var(--text-2); line-height:1.6">Catat uang buat kamu, pasangan, dan keluarga. Cepat, ringan, Rupiah.</p>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:18px">
+        <div style="display:flex; align-items:center; gap:14px">
+          <span style="font-size:26px">⚡</span>
+          <div><div style="font-weight:600; font-size:14px">4 ketukan, kurang dari 5 detik</div><div style="font-size:12px; color:var(--text-2); margin-top:2px">Numpad pintar, kategori lokal Indonesia</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px">
+          <span style="font-size:26px">🏠</span>
+          <div><div style="font-weight:600; font-size:14px">Catat bareng Rumah</div><div style="font-size:12px; color:var(--text-2); margin-top:2px">Invite anggota, lihat kontribusi bersama</div></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px">
+          <span style="font-size:26px">📊</span>
+          <div><div style="font-weight:600; font-size:14px">Insight otomatis tiap minggu</div><div style="font-size:12px; color:var(--text-2); margin-top:2px">Ringkasan bulan, perbandingan, anggaran</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px">
+      <button onclick="openAuthModal('register')" style="width:100%; padding:16px; background:var(--accent); color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:700">Daftar Sekarang</button>
+      <button onclick="openAuthModal('login')" style="width:100%; padding:14px; background:none; border:1.5px solid var(--border); border-radius:12px; font-size:15px; font-weight:600; color:var(--text)">Sudah punya akun? Masuk</button>
+    </div>
+  </div>
+
   <!-- APP -->
   <div id="app">
     <section id="screen-beranda" class="screen active">
@@ -394,7 +426,7 @@
         <div id="profil-avatar" style="
           width:56px;height:56px;border-radius:50%;background:var(--accent);
           color:#fff;font-size:22px;font-weight:700;display:flex;align-items:center;
-          justify-content:center;flex-shrink:0">?</div>
+          justify-content:center;flex-shrink:0">👤</div>
         <div>
           <div id="profil-email" style="font-weight:600;font-size:15px">—</div>
           <div style="font-size:12px;color:var(--text-2);margin-top:2px">Akun lokal</div>
@@ -406,8 +438,8 @@
         <div class="settings-row">
           <span>Tema</span>
           <div style="display:flex;gap:6px">
-            <button class="theme-btn" data-theme="light">☀️ Terang</button>
-            <button class="theme-btn" data-theme="dark">🌙 Gelap</button>
+            <button class="theme-btn" data-pick-theme="light">☀️ Terang</button>
+            <button class="theme-btn" data-pick-theme="dark">🌙 Gelap</button>
           </div>
         </div>
       </div>
@@ -577,6 +609,15 @@
     // AUTH
     function showAuthOverlay() { document.getElementById('auth-overlay').classList.add('open'); }
     function hideAuthOverlay() { document.getElementById('auth-overlay').classList.remove('open'); }
+    function showLanding() {
+      document.getElementById('landing').style.display = 'flex';
+      document.getElementById('app').classList.remove('visible');
+      hideAuthOverlay();
+    }
+    function openAuthModal(tab) {
+      showTab(tab);
+      showAuthOverlay();
+    }
 
     function showTab(tab) {
       document.getElementById('tab-login').classList.toggle('active', tab === 'login');
@@ -615,7 +656,11 @@
     }
 
     function showAuthError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
-    function logout() { clearToken(); showAuthOverlay(); }
+    function logout() {
+      if (!confirm('Yakin mau keluar?')) return;
+      clearToken();
+      showLanding();
+    }
 
     // TAB ROUTER
     function showScreen(name) {
@@ -631,7 +676,9 @@
 
     // ENTRY POINT
     function onAppReady() {
+      document.getElementById('landing').style.display = 'none';
       document.getElementById('app').classList.add('visible');
+      hideAuthOverlay();
       loadBeranda();
     }
 
@@ -639,7 +686,7 @@
     const urlToken = new URLSearchParams(location.search).get('token');
     if (urlToken) { setToken(urlToken); history.replaceState({}, '', '/'); }
 
-    if (getToken()) { onAppReady(); } else { showAuthOverlay(); }
+    if (getToken()) { onAppReady(); } else { showLanding(); }
 
     const CATS = {
       'Makan & Minum':'🍽️','Transportasi':'🛵','Kos & Rumah':'🏠',
@@ -947,6 +994,8 @@
     function closeSheet() {
       document.getElementById('quick-add-sheet').classList.remove('open');
       document.getElementById('sheet-overlay').style.display = 'none';
+      const btn = document.getElementById('sheet-simpan');
+      if (btn) { btn.textContent = 'Simpan'; btn.style.background = ''; }
     }
 
     document.getElementById('sheet-overlay').addEventListener('click', closeSheet);
@@ -1395,9 +1444,9 @@
     function applyTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
       localStorage.setItem('catetu_theme', theme);
-      document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.pickTheme === theme));
     }
-    document.querySelectorAll('.theme-btn').forEach(btn => btn.addEventListener('click', () => applyTheme(btn.dataset.theme)));
+    document.querySelectorAll('.theme-btn').forEach(btn => btn.addEventListener('click', () => applyTheme(btn.dataset.pickTheme)));
     applyTheme(localStorage.getItem('catetu_theme') || 'light');
 
     document.querySelector('.tab[data-screen="profil"]').addEventListener('click', loadProfil);
@@ -1614,6 +1663,16 @@
 
     function onBarengToggle() {
       updateBarengSwitchStyle();
+      const cb = document.getElementById('bareng-checkbox');
+      const btn = document.getElementById('sheet-simpan');
+      if (!btn) return;
+      if (cb?.checked) {
+        btn.textContent = 'Simpan ke Rumah 🏠';
+        btn.style.background = '#00695C';
+      } else {
+        btn.textContent = 'Simpan';
+        btn.style.background = '';
+      }
     }
 
     function updateBarengSwitchStyle() {
