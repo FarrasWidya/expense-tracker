@@ -1,5 +1,7 @@
-package com.faras.expense_tracker;
+package com.faras.expense_tracker.repository;
 
+import com.faras.expense_tracker.entity.Expense;
+import com.faras.expense_tracker.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDate;
 import java.util.List;

@@ -1,5 +1,6 @@
 package com.faras.expense_tracker;
 
+import com.faras.expense_tracker.security.JwtUtil;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

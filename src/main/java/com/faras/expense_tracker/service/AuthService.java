@@ -1,5 +1,8 @@
-package com.faras.expense_tracker;
+package com.faras.expense_tracker.service;
 
+import com.faras.expense_tracker.entity.User;
+import com.faras.expense_tracker.repository.UserRepository;
+import com.faras.expense_tracker.security.JwtUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

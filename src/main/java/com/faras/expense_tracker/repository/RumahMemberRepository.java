@@ -1,5 +1,7 @@
-package com.faras.expense_tracker;
+package com.faras.expense_tracker.repository;
 
+import com.faras.expense_tracker.entity.Rumah;
+import com.faras.expense_tracker.entity.RumahMember;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;

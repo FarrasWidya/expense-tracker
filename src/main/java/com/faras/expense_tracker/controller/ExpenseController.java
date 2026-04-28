@@ -1,5 +1,7 @@
-package com.faras.expense_tracker;
+package com.faras.expense_tracker.controller;
 
+import com.faras.expense_tracker.entity.Expense;
+import com.faras.expense_tracker.service.ExpenseService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
