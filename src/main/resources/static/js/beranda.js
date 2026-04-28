@@ -161,6 +161,58 @@ function renderStreak(expenses) {
   badge.textContent = `📅 ${s} hari berturut-turut`;
 }
 
+const DONUT_COLORS = ['#00897B','#26A69A','#EF5350','#FFA726','#42A5F5','#AB47BC','#66BB6A','#FF7043'];
+
+function renderDonutChart(expenses) {
+  const svg = document.getElementById('beranda-donut');
+  const legend = document.getElementById('beranda-donut-legend');
+  if (!svg || !legend) return;
+
+  if (!expenses.length) {
+    svg.innerHTML = '';
+    legend.innerHTML = '<div style="font-size:13px;color:var(--text-2)">Belum ada data</div>';
+    return;
+  }
+
+  const totals = {};
+  expenses.forEach(e => { totals[e.category] = (totals[e.category] || 0) + e.amount; });
+  const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1]);
+  const grandTotal = sorted.reduce((s, [, v]) => s + v, 0);
+  const top = sorted.slice(0, 5);
+  const otherAmt = sorted.slice(5).reduce((s, [, v]) => s + v, 0);
+  if (otherAmt > 0) top.push(['Lainnya', otherAmt]);
+
+  const cx = 55, cy = 55, r = 42, strokeW = 14;
+  const circ = 2 * Math.PI * r;
+  let offset = 0;
+
+  let svgHtml = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--border)" stroke-width="${strokeW}"/>`;
+  top.forEach(([cat, amt], i) => {
+    const frac = amt / grandTotal;
+    const dash = frac * circ;
+    const color = DONUT_COLORS[i % DONUT_COLORS.length];
+    svgHtml += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none"
+      stroke="${color}" stroke-width="${strokeW}"
+      stroke-dasharray="${dash} ${circ}"
+      stroke-dashoffset="${-offset}"
+      stroke-linecap="butt"
+      transform="rotate(-90 ${cx} ${cy})"/>`;
+    offset += dash;
+  });
+  svgHtml += `<text x="${cx}" y="${cy}" class="cat-donut-center">${top.length} kat.</text>`;
+  svg.innerHTML = svgHtml;
+
+  legend.innerHTML = top.map(([cat, amt], i) => {
+    const pct = Math.round((amt / grandTotal) * 100);
+    const color = DONUT_COLORS[i % DONUT_COLORS.length];
+    return `<div class="cat-legend-row">
+      <div class="cat-legend-dot" style="background:${color}"></div>
+      <div class="cat-legend-name">${escHtml(cat)}</div>
+      <div class="cat-legend-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+}
+
 async function loadBeranda() {
   // Greeting
   const greetName = document.getElementById('beranda-greeting-name');
@@ -220,6 +272,7 @@ async function loadBeranda() {
   }
 
   const lastMonthTotal = lastMonth.reduce((s, e) => s + e.amount, 0);
+  renderDonutChart(expenses);
   renderInsightCards(expenses, lastMonthTotal);
   renderStreak(expenses);
   checkWeeklyInsight();
