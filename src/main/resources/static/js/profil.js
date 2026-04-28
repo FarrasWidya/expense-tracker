@@ -1,3 +1,40 @@
+// NICKNAME
+function getNickname() {
+  return localStorage.getItem('catetU_nickname') || '';
+}
+function setNickname(name) {
+  localStorage.setItem('catetU_nickname', name.trim());
+}
+
+function showNicknameModal(onSave) {
+  document.getElementById('nickname-modal-overlay').style.display = 'flex';
+  const input = document.getElementById('nickname-input');
+  input.value = getNickname();
+  input.focus();
+  document.getElementById('nickname-save-btn').onclick = () => {
+    const val = input.value.trim();
+    if (!val) return;
+    setNickname(val);
+    document.getElementById('nickname-modal-overlay').style.display = 'none';
+    if (onSave) onSave(val);
+  };
+  document.getElementById('nickname-skip-btn').onclick = () => {
+    const fallback = (document.getElementById('profil-email')?.textContent || 'Kamu').split('@')[0];
+    setNickname(fallback);
+    document.getElementById('nickname-modal-overlay').style.display = 'none';
+    if (onSave) onSave(getNickname());
+  };
+}
+
+function checkNicknameOnboarding() {
+  if (!getNickname()) {
+    showNicknameModal(() => {
+      const greeting = document.getElementById('beranda-greeting-name');
+      if (greeting) greeting.textContent = getNickname();
+    });
+  }
+}
+
 // PROFIL
 function scheduleNudge(todayCount) {
   if (localStorage.getItem('catetu_nudge_enabled') === 'false') return;
@@ -204,6 +241,17 @@ async function loadProfil() {
     document.getElementById('profil-email').textContent = email;
     document.getElementById('profil-avatar').textContent = email.split('@')[0].slice(0, 2).toUpperCase();
   } catch (_) {}
+  // Nickname row
+  const nicknameEl = document.getElementById('profil-nickname-value');
+  if (nicknameEl) nicknameEl.textContent = getNickname() || '—';
+  const nicknameEditBtn = document.getElementById('profil-nickname-edit');
+  if (nicknameEditBtn) {
+    nicknameEditBtn.onclick = () => showNicknameModal(() => {
+      if (nicknameEl) nicknameEl.textContent = getNickname();
+      const greetEl = document.getElementById('beranda-greeting-name');
+      if (greetEl) greetEl.textContent = getNickname();
+    });
+  }
   loadProfilSettings();
 }
 

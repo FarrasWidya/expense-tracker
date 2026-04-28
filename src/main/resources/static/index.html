@@ -183,6 +183,17 @@
         </div>
       </div>
 
+      <div class="section-label">Nama</div>
+      <div class="card">
+        <div class="settings-row">
+          <span>Nama panggilan</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="profil-nickname-value" style="font-size:14px;color:var(--text-2)">—</span>
+            <button id="profil-nickname-edit" style="padding:4px 10px;border-radius:8px;border:1.5px solid var(--border);background:none;font-size:12px;color:var(--text-2)">Ubah</button>
+          </div>
+        </div>
+      </div>
+
       <div class="section-label">Tampilan</div>
       <div class="card">
         <div class="settings-row">
@@ -303,6 +314,24 @@
         <div class="monthly-total" id="monthly-summary-total"></div>
         <div id="monthly-summary-rows"></div>
         <button class="monthly-close" onclick="closeMonthlySummary()">Tutup</button>
+      </div>
+    </div>
+    <!-- NICKNAME MODAL -->
+    <div id="nickname-modal-overlay" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);align-items:flex-end;justify-content:center">
+      <div style="background:var(--surface);border-radius:20px 20px 0 0;padding:28px 20px 40px;width:100%;max-width:480px">
+        <div style="font-size:24px;text-align:center;margin-bottom:8px">👋</div>
+        <div style="font-size:18px;font-weight:700;text-align:center;margin-bottom:4px">Kamu mau dipanggil apa?</div>
+        <div style="font-size:13px;color:var(--text-2);text-align:center;margin-bottom:20px">Bisa nama, nickname, atau apa saja</div>
+        <input id="nickname-input" type="text" placeholder="mis. Sarah, Kak Budi, Devi..." maxlength="30"
+          style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--accent);background:var(--raised);font-size:16px;font-family:var(--font);color:var(--text);outline:none;margin-bottom:12px;text-align:center">
+        <button id="nickname-save-btn"
+          style="width:100%;padding:14px;border-radius:12px;background:var(--accent);color:#fff;border:none;font-size:16px;font-weight:700;margin-bottom:8px">
+          Simpan
+        </button>
+        <button id="nickname-skip-btn"
+          style="width:100%;padding:12px;border-radius:12px;background:none;border:none;color:var(--text-2);font-size:14px">
+          Lewati
+        </button>
       </div>
     </div>
     <!-- LOGOUT CONFIRM MODAL -->

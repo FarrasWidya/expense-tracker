@@ -17,6 +17,7 @@ function onAppReady() {
   hideAuthOverlay();
   loadBeranda();
   loadRumahTab(); // pre-load so bareng toggle works without visiting Rumah tab first
+  checkNicknameOnboarding();
 }
 
 // ?token= pickup (Google OAuth)
