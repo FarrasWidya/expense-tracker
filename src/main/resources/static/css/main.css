@@ -343,3 +343,13 @@
 .cat-legend-pct { font-size: 12px; color: var(--text-2); font-family: var(--mono); white-space: nowrap; }
 .cat-legend-amt { font-size: 12px; font-family: var(--mono); color: var(--text); font-weight: 600; white-space: nowrap; }
 .cat-donut-center { font-family: var(--mono); font-size: 11px; fill: var(--text-2); text-anchor: middle; dominant-baseline: middle; }
+
+/* RUMAH IN ANGGARAN */
+.rumah-section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 16px 8px; cursor: pointer; user-select: none;
+}
+.rumah-section-header h3 { font-size: 15px; font-weight: 700; color: var(--text); }
+.rumah-chevron { font-size: 14px; color: var(--text-2); transition: transform .2s; }
+.rumah-chevron.open { transform: rotate(180deg); }
+#rumah-section-body { overflow: hidden; }

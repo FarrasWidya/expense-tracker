@@ -59,3 +59,15 @@ async function loadAnggaran() {
 }
 
 document.querySelector('.tab[data-screen="anggaran"]').addEventListener('click', loadAnggaran);
+
+// RUMAH IN ANGGARAN
+let rumahSectionOpen = false;
+
+function toggleRumahSection() {
+  rumahSectionOpen = !rumahSectionOpen;
+  const body = document.getElementById('rumah-section-body');
+  const chevron = document.getElementById('rumah-chevron');
+  if (body) body.style.display = rumahSectionOpen ? 'block' : 'none';
+  if (chevron) chevron.classList.toggle('open', rumahSectionOpen);
+  if (rumahSectionOpen) loadRumahTab();
+}

@@ -234,8 +234,7 @@ function updateBarengSwitchStyle() {
   if (thumb) thumb.style.left = cb.checked ? '22px' : '2px';
 }
 
-// Wire Rumah tab data load and polling lifecycle
-document.querySelector('.tab[data-screen="rumah"]')?.addEventListener('click', loadRumahTab);
-document.querySelectorAll('.tab:not([data-screen="rumah"])').forEach(btn =>
+// Stop Rumah polling when leaving Anggaran tab
+document.querySelectorAll('.tab:not([data-screen="anggaran"])').forEach(btn =>
   btn.addEventListener('click', stopRumahPolling)
 );

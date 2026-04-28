@@ -16,7 +16,7 @@ function onAppReady() {
   document.getElementById('app').classList.add('visible');
   hideAuthOverlay();
   loadBeranda();
-  loadRumahTab(); // pre-load so bareng toggle works without visiting Rumah tab first
+  loadRumahTab(); // pre-load for bareng toggle (doesn't render UI, just fetches currentRumah)
   checkNicknameOnboarding();
 }
 
