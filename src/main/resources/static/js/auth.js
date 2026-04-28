@@ -12,9 +12,9 @@ function openAuthModal(tab) {
 }
 
 function showTab(tab) {
-  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
-  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('auth-modal-title').textContent = tab === 'login' ? 'Masuk' : 'Daftar Akun';
   document.getElementById('auth-submit-btn').textContent = tab === 'login' ? 'Masuk' : 'Daftar';
+  document.getElementById('auth-submit-btn').dataset.tab = tab;
   document.getElementById('auth-error').style.display = 'none';
   document.getElementById('auth-email').value = '';
   document.getElementById('auth-password').value = '';
@@ -25,7 +25,7 @@ async function submitAuth() {
   const errEl  = document.getElementById('auth-error');
   const email  = document.getElementById('auth-email').value.trim();
   const pass   = document.getElementById('auth-password').value;
-  const isLogin = document.getElementById('tab-login').classList.contains('active');
+  const isLogin = document.getElementById('auth-submit-btn').dataset.tab === 'login';
   errEl.style.display = 'none';
   btn.disabled = true;
   try {
