@@ -186,13 +186,14 @@
       text-align: center; font-family: var(--mono);
       font-size: 40px; font-weight: 700; letter-spacing: -1px; padding: 4px 0; flex-shrink: 0;
     }
-    #sheet-cats { display: flex; gap: 8px; overflow-x: auto; padding: 2px 0; scrollbar-width: none; flex-shrink: 0; }
-    #sheet-cats::-webkit-scrollbar { display: none; }
+    #sheet-cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0; flex-shrink: 0; }
     .cat-pill {
-      flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; padding: 10px 6px; border-radius: 12px;
       border: 1.5px solid var(--border); background: none;
-      font-size: 13px; color: var(--text);
+      font-size: 11px; color: var(--text-2); text-align: center; line-height: 1.2;
     }
+    .cat-pill .cat-emoji { font-size: 22px; line-height: 1; }
     .cat-pill.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); font-weight: 600; }
     #sheet-note input {
       width: 100%; padding: 10px 14px; border-radius: 10px;
@@ -1017,7 +1018,7 @@
 
     function renderCatPills() {
       document.getElementById('sheet-cats').innerHTML = CATEGORY_LIST.map(c =>
-        `<button class="cat-pill${c.label === sheetCat ? ' selected' : ''}" data-cat="${escHtml(c.label)}">${c.emoji} ${escHtml(getDisplayLabel(c.label))}</button>`
+        `<button class="cat-pill${c.label === sheetCat ? ' selected' : ''}" data-cat="${escHtml(c.label)}"><span class="cat-emoji">${c.emoji}</span><span>${escHtml(getDisplayLabel(c.label))}</span></button>`
       ).join('');
       document.querySelectorAll('.cat-pill').forEach(btn =>
         btn.addEventListener('click', () => { sheetCat = btn.dataset.cat; renderCatPills(); })
