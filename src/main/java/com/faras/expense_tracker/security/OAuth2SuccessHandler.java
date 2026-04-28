@@ -1,5 +1,7 @@
-package com.faras.expense_tracker;
+package com.faras.expense_tracker.security;
 
+import com.faras.expense_tracker.entity.User;
+import com.faras.expense_tracker.repository.UserRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.core.Authentication;

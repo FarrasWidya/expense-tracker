@@ -1,4 +1,4 @@
-package com.faras.expense_tracker;
+package com.faras.expense_tracker.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

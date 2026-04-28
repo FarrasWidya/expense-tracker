@@ -1,5 +1,13 @@
-package com.faras.expense_tracker;
+package com.faras.expense_tracker.service;
 
+import com.faras.expense_tracker.entity.Rumah;
+import com.faras.expense_tracker.entity.RumahMember;
+import com.faras.expense_tracker.entity.SharedExpense;
+import com.faras.expense_tracker.entity.User;
+import com.faras.expense_tracker.repository.RumahMemberRepository;
+import com.faras.expense_tracker.repository.RumahRepository;
+import com.faras.expense_tracker.repository.SharedExpenseRepository;
+import com.faras.expense_tracker.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;

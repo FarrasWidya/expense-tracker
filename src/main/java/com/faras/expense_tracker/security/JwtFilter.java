@@ -1,4 +1,4 @@
-package com.faras.expense_tracker;
+package com.faras.expense_tracker.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
