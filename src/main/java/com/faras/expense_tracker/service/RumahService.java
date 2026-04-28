@@ -180,6 +180,39 @@ public class RumahService {
         return sharedExpRepo.findByRumahOrderByCreatedAtDesc(rumah, pageable);
     }
 
+    public void kickMember(Long adminId, UUID rumahId, Long targetUserId) {
+        Rumah rumah = rumahRepo.findById(rumahId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rumah not found"));
+
+        if (!rumah.getAdmin().getId().equals(adminId))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admin can kick members");
+
+        if (adminId.equals(targetUserId))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Admin cannot kick themselves");
+
+        if (!memberRepo.existsByRumahAndUserId(rumah, targetUserId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Target is not a member");
+
+        memberRepo.deleteByRumahAndUserId(rumah, targetUserId);
+    }
+
+    public RumahResponse transferAdmin(Long adminId, UUID rumahId, Long newAdminId) {
+        Rumah rumah = rumahRepo.findById(rumahId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rumah not found"));
+
+        if (!rumah.getAdmin().getId().equals(adminId))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only admin can transfer ownership");
+
+        if (!memberRepo.existsByRumahAndUserId(rumah, newAdminId))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Target is not a member");
+
+        User newAdmin = getUser(newAdminId);
+        rumah.setAdmin(newAdmin);
+        rumahRepo.save(rumah);
+
+        return toResponse(rumah);
+    }
+
     public List<ContributionMember> getContribution(Long userId, UUID rumahId) {
         Rumah rumah = rumahRepo.findById(rumahId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));

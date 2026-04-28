@@ -87,6 +87,17 @@ public class RumahController {
         rumahService.deleteSharedExpense(userId(auth), id, expId);
     }
 
+    @DeleteMapping("/rumah/{id}/members/{targetId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void kickMember(@PathVariable UUID id, @PathVariable Long targetId, Authentication auth) {
+        rumahService.kickMember(userId(auth), id, targetId);
+    }
+
+    @PutMapping("/rumah/{id}/admin/{newAdminId}")
+    public RumahService.RumahResponse transferAdmin(@PathVariable UUID id, @PathVariable Long newAdminId, Authentication auth) {
+        return rumahService.transferAdmin(userId(auth), id, newAdminId);
+    }
+
     @GetMapping("/rumah/{id}/contribution")
     public List<RumahService.ContributionMember> getContribution(@PathVariable UUID id, Authentication auth) {
         return rumahService.getContribution(userId(auth), id);
