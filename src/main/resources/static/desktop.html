@@ -492,6 +492,8 @@ table.expense-table{width:100%;border-collapse:collapse;font-size:13px}
                 </div>
                 <button onclick="desktopShareRumahLink()" style="margin-left:auto; background:none; border:none; cursor:pointer; font-size:18px" title="Salin link undangan">🔗</button>
               </div>
+              <div style="font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:.5px; margin-bottom:10px">ANGGOTA</div>
+              <div id="desktop-member-list" style="margin-bottom:16px"></div>
               <div style="font-size:11px; font-weight:600; color:var(--text-muted); letter-spacing:.5px; margin-bottom:10px">KONTRIBUSI BULAN INI</div>
               <div id="desktop-contribution-list"></div>
             </div>
@@ -1613,10 +1615,16 @@ async function saveOverlay() {
 // ─── Desktop Rumah ────────────────────────────────────────────────────────────
 
 let desktopCurrentRumah = null;
+let desktopCurrentUserId = null;
+let desktopRumahMemberMap = {};
 let desktopRumahPollInterval = null;
 let desktopBarengActive = false;
 
 async function loadDesktopRumah() {
+  if (!desktopCurrentUserId) {
+    const meR = await api('GET', '/auth/me');
+    if (meR && meR.ok) { const me = await meR.json(); desktopCurrentUserId = me.id; }
+  }
   const r = await api('GET', '/rumah/me');
   const data = r && r.ok ? await r.json() : null;
   desktopCurrentRumah = data && data.id ? data : null;
@@ -1635,9 +1643,53 @@ async function loadDesktopRumah() {
   document.getElementById('desktop-rumah-member-count').textContent =
     (desktopCurrentRumah.members || []).length + ' anggota';
 
+  renderDesktopMemberList(desktopCurrentRumah);
   loadDesktopContribution(desktopCurrentRumah.id);
   loadDesktopRumahFeed(desktopCurrentRumah.id);
   startDesktopRumahPolling(desktopCurrentRumah.id);
+}
+
+function renderDesktopMemberList(rumah) {
+  const el = document.getElementById('desktop-member-list');
+  if (!el) return;
+  const isAdmin = desktopCurrentUserId && rumah.adminId === desktopCurrentUserId;
+  desktopRumahMemberMap = {};
+  el.innerHTML = (rumah.members || []).map(m => {
+    desktopRumahMemberMap[m.userId] = m;
+    const initial = ((m.name || '?')[0]).toUpperCase();
+    const isThisAdmin = m.userId === rumah.adminId;
+    const isSelf = m.userId === desktopCurrentUserId;
+    const badge = isThisAdmin
+      ? `<span style="font-size:10px;background:${rumah.color||'var(--accent)'};color:#fff;border-radius:4px;padding:1px 5px;margin-left:5px">Admin</span>`
+      : '';
+    const kickBtn = (isAdmin && !isSelf)
+      ? `<button onclick="desktopKickMember('${rumah.id}',${m.userId})" style="font-size:11px;color:#e53935;background:none;border:1px solid #e53935;border-radius:6px;padding:1px 6px;cursor:pointer;flex-shrink:0">Keluarkan</button>`
+      : '';
+    const transferBtn = (isAdmin && !isSelf && !isThisAdmin)
+      ? `<button onclick="desktopTransferAdmin('${rumah.id}',${m.userId})" style="font-size:11px;color:var(--accent);background:none;border:1px solid var(--accent);border-radius:6px;padding:1px 6px;cursor:pointer;flex-shrink:0">Jadikan Admin</button>`
+      : '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">
+      <span style="width:24px;height:24px;border-radius:50%;background:${rumah.color||'var(--accent)'};color:#fff;font-size:10px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">${initial}</span>
+      <span style="flex:1;font-size:13px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.name || '?'}${badge}</span>
+      ${kickBtn}${transferBtn}
+    </div>`;
+  }).join('');
+}
+
+async function desktopKickMember(rumahId, targetId) {
+  const name = (desktopRumahMemberMap[targetId]?.name || 'anggota ini');
+  if (!confirm(`Keluarkan ${name} dari Rumah?`)) return;
+  const r = await api('DELETE', `/rumah/${rumahId}/members/${targetId}`);
+  if (r && r.ok) loadDesktopRumah();
+  else alert('Gagal mengeluarkan anggota');
+}
+
+async function desktopTransferAdmin(rumahId, newAdminId) {
+  const name = (desktopRumahMemberMap[newAdminId]?.name || 'anggota ini');
+  if (!confirm(`Jadikan ${name} admin Rumah?`)) return;
+  const r = await api('PUT', `/rumah/${rumahId}/admin/${newAdminId}`);
+  if (r && r.ok) loadDesktopRumah();
+  else alert('Gagal transfer admin');
 }
 
 async function loadDesktopContribution(rumahId) {
@@ -1671,8 +1723,9 @@ async function loadDesktopRumahFeed(rumahId) {
     emptyEl.style.display = 'block'; tableEl.style.display = 'none'; return;
   }
   emptyEl.style.display = 'none'; tableEl.style.display = 'table';
+  const accentColor = desktopCurrentRumah?.color || 'var(--accent)';
   tbody.innerHTML = page.content.map(exp => `
-    <tr style="border-bottom:1px solid var(--border); font-size:14px">
+    <tr style="border-bottom:1px solid var(--border); font-size:14px; border-left:3px solid ${accentColor}">
       <td style="padding:12px 8px; color:var(--text-muted)">${exp.date}</td>
       <td style="padding:12px 8px; font-weight:500">${((exp.createdBy && exp.createdBy.name) || '?').split(' ')[0]}</td>
       <td style="padding:12px 8px">${catEmoji(exp.category)} ${exp.category}</td>

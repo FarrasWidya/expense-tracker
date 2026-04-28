@@ -264,6 +264,102 @@ class RumahControllerTest {
                 .andExpect(status().isForbidden());
     }
 
+    // ── Member management (kick + transfer admin) ─────────────────────────────
+
+    @Test
+    void kickMember_byAdmin_removesTargetMember() throws Exception {
+        String rumahJson = createRumah(token1);
+        String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
+        String inviteToken = objectMapper.readTree(rumahJson).get("inviteToken").asText();
+
+        String joinJson = mockMvc.perform(authed(post("/rumah/join/" + inviteToken), token2))
+                .andReturn().getResponse().getContentAsString();
+        long adminId = objectMapper.readTree(rumahJson).get("adminId").asLong();
+        long user2Id = -1;
+        for (var m : objectMapper.readTree(joinJson).get("members")) {
+            long uid = m.get("userId").asLong();
+            if (uid != adminId) { user2Id = uid; break; }
+        }
+
+        mockMvc.perform(authed(delete("/rumah/" + rumahId + "/members/" + user2Id), token1))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(authed(get("/rumah/me"), token1))
+                .andExpect(jsonPath("$.members", hasSize(1)));
+    }
+
+    @Test
+    void kickMember_byNonAdmin_returns403() throws Exception {
+        String rumahJson = createRumah(token1);
+        String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
+        String inviteToken = objectMapper.readTree(rumahJson).get("inviteToken").asText();
+        mockMvc.perform(authed(post("/rumah/join/" + inviteToken), token2)).andExpect(status().isOk());
+        long adminId = objectMapper.readTree(rumahJson).get("adminId").asLong();
+
+        mockMvc.perform(authed(delete("/rumah/" + rumahId + "/members/" + adminId), token2))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void kickMember_adminKickSelf_returns403() throws Exception {
+        String rumahJson = createRumah(token1);
+        String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
+        long adminId = objectMapper.readTree(rumahJson).get("adminId").asLong();
+
+        mockMvc.perform(authed(delete("/rumah/" + rumahId + "/members/" + adminId), token1))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void kickMember_targetNotMember_returns404() throws Exception {
+        String rumahJson = createRumah(token1);
+        String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
+
+        mockMvc.perform(authed(delete("/rumah/" + rumahId + "/members/99999"), token1))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void transferAdmin_byAdmin_updatesAdmin() throws Exception {
+        String rumahJson = createRumah(token1);
+        String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
+        String inviteToken = objectMapper.readTree(rumahJson).get("inviteToken").asText();
+
+        String joinJson = mockMvc.perform(authed(post("/rumah/join/" + inviteToken), token2))
+                .andReturn().getResponse().getContentAsString();
+        long adminId = objectMapper.readTree(rumahJson).get("adminId").asLong();
+        long user2Id = -1;
+        for (var m : objectMapper.readTree(joinJson).get("members")) {
+            long uid = m.get("userId").asLong();
+            if (uid != adminId) { user2Id = uid; break; }
+        }
+
+        mockMvc.perform(authed(put("/rumah/" + rumahId + "/admin/" + user2Id), token1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.adminId").value(user2Id));
+    }
+
+    @Test
+    void transferAdmin_byNonAdmin_returns403() throws Exception {
+        String rumahJson = createRumah(token1);
+        String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
+        String inviteToken = objectMapper.readTree(rumahJson).get("inviteToken").asText();
+        mockMvc.perform(authed(post("/rumah/join/" + inviteToken), token2)).andExpect(status().isOk());
+        long adminId = objectMapper.readTree(rumahJson).get("adminId").asLong();
+
+        mockMvc.perform(authed(put("/rumah/" + rumahId + "/admin/" + adminId), token2))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void transferAdmin_targetNotMember_returns404() throws Exception {
+        String rumahJson = createRumah(token1);
+        String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
+
+        mockMvc.perform(authed(put("/rumah/" + rumahId + "/admin/99999"), token1))
+                .andExpect(status().isNotFound());
+    }
+
     // ── Contribution ──────────────────────────────────────────────────────────
 
     @Test
