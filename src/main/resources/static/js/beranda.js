@@ -255,7 +255,7 @@ async function loadBeranda() {
     breakdownEl.innerHTML = sorted.map(([cat, amt]) => {
       const pct = Math.round((amt / max) * 100);
       return `<div class="hero-cat-row">
-        <div class="hero-cat-label">${CATS[cat] || '📦'} <span style="font-size:12px;color:var(--text-2)">${escHtml(cat)}</span></div>
+        <div class="hero-cat-label">${CATS[cat] || '📦'} <span style="font-size:12px;color:inherit">${escHtml(cat)}</span></div>
         <div class="hero-cat-bar-wrap"><div class="hero-cat-bar" style="width:${pct}%"></div></div>
         <div class="hero-cat-amount">${formatRp(amt)}</div>
       </div>`;
