@@ -22,6 +22,8 @@
       --sb: env(safe-area-inset-bottom, 0px);
       --font: 'Plus Jakarta Sans', Inter, sans-serif;
       --mono: 'JetBrains Mono', monospace;
+      --card-bg: #FFFFFF;
+      --text-1: #1C1C1E;
       /* aliases used by Rumah feature */
       --text-primary: var(--text);
       --text-secondary: var(--text-2);
@@ -35,6 +37,8 @@
       --text: #F0F0F0;
       --text-2: #9E9E9E;
       --accent-dim: #1B3531;
+      --card-bg: #1E1E1E;
+      --text-1: #F0F0F0;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -274,15 +278,15 @@
     #weekly-insight-wrap { display: none; padding: 0 16px 8px; }
     .weekly-card { background: var(--accent); border-radius: 12px; padding: 14px 34px 14px 14px; font-size: 13px; color: #fff; line-height: 1.5; position: relative; }
     .weekly-card .insight-dismiss { color: rgba(255,255,255,.75); }
-    #payday-banner { display: none; margin: 0 16px 8px; background: #E0F2F1; border-radius: 12px; padding: 12px 14px; flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
-    #ramadan-suggestion { display: none; margin: 0 16px 8px; background: #FFF8E7; border: 1px solid #F59E0B; border-radius: 12px; padding: 14px; font-size: 13px; }
+    #payday-banner { display: none; margin: 0 16px 8px; background: var(--accent-dim); border-radius: 12px; padding: 12px 14px; flex-direction: row; align-items: center; justify-content: space-between; gap: 10px; }
+    #ramadan-suggestion { display: none; margin: 0 16px 8px; background: var(--raised); border: 1px solid #F59E0B; border-radius: 12px; padding: 14px; font-size: 13px; }
     .ramadan-btns { display: flex; gap: 8px; margin-top: 10px; }
     .btn-ramadan-on { background: var(--accent); color: #fff; border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; }
     .btn-ramadan-off { background: none; border: 1px solid var(--text-2); border-radius: 8px; padding: 8px 14px; font-size: 13px; color: var(--text-2); cursor: pointer; }
-    #nudge-toast { position: fixed; bottom: 90px; left: 16px; right: 16px; background: #fff; border: 1px solid rgba(0,0,0,.09); border-radius: 14px; padding: 14px 16px; box-shadow: 0 4px 24px rgba(0,0,0,.13); display: none; z-index: 999; }
+    #nudge-toast { position: fixed; bottom: 90px; left: 16px; right: 16px; background: var(--raised); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; box-shadow: 0 4px 24px rgba(0,0,0,.13); display: none; z-index: 999; }
     #nudge-toast .toast-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
     .monthly-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; display: flex; align-items: flex-end; }
-    .monthly-sheet { background: #fff; border-radius: 20px 20px 0 0; padding: 24px 20px 32px; width: 100%; }
+    .monthly-sheet { background: var(--surface); border-radius: 20px 20px 0 0; padding: 24px 20px 32px; width: 100%; }
     .monthly-sheet h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
     .monthly-sub { font-size: 13px; color: var(--text-2); margin-bottom: 20px; }
     .monthly-total { font-family: var(--mono); font-size: 28px; font-weight: 700; margin: 8px 0 16px; }
