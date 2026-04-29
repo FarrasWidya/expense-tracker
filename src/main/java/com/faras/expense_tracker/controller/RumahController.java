@@ -25,8 +25,8 @@ public class RumahController {
     public record CreateRumahRequest(String name, String emoji, String color) {}
     public record SharedExpenseRequest(Double amount, String category, String note, String date) {}
 
-    private Long userId(Authentication auth) {
-        return (Long) auth.getPrincipal();
+    private UUID userId(Authentication auth) {
+        return (UUID) auth.getPrincipal();
     }
 
     @PostMapping("/rumah")
@@ -89,12 +89,12 @@ public class RumahController {
 
     @DeleteMapping("/rumah/{id}/members/{targetId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void kickMember(@PathVariable UUID id, @PathVariable Long targetId, Authentication auth) {
+    public void kickMember(@PathVariable UUID id, @PathVariable UUID targetId, Authentication auth) {
         rumahService.kickMember(userId(auth), id, targetId);
     }
 
     @PutMapping("/rumah/{id}/admin/{newAdminId}")
-    public RumahService.RumahResponse transferAdmin(@PathVariable UUID id, @PathVariable Long newAdminId, Authentication auth) {
+    public RumahService.RumahResponse transferAdmin(@PathVariable UUID id, @PathVariable UUID newAdminId, Authentication auth) {
         return rumahService.transferAdmin(userId(auth), id, newAdminId);
     }
 
