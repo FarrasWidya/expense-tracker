@@ -1,14 +1,16 @@
 package com.faras.expense_tracker.entity;
 
 import jakarta.persistence.*;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "uuid", updatable = false)
+    private UUID id;
 
     @Column(unique = true, nullable = false)
     private String email;
@@ -20,7 +22,6 @@ public class User {
     private Provider provider;
 
     private String googleId;
-
     private String name;
 
     @Column(columnDefinition = "TEXT")
@@ -28,8 +29,8 @@ public class User {
 
     public enum Provider { LOCAL, GOOGLE }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     public String getPassword() { return password; }
