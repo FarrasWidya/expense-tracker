@@ -12,3 +12,11 @@ const CATEGORY_LIST = [
   {emoji:'🙏',label:'Sedekah & Sosial'},{emoji:'✂️',label:'Perawatan Diri'},
   {emoji:'💸',label:'Transfer & Hutang'},{emoji:'📦',label:'Lainnya'},
 ];
+const INCOME_CATEGORY_LIST = [
+  {emoji:'💼',label:'Gaji'},
+  {emoji:'💻',label:'Freelance'},
+  {emoji:'🎁',label:'Hadiah'},
+  {emoji:'📥',label:'Transfer Masuk'},
+  {emoji:'📈',label:'Investasi'},
+  {emoji:'📦',label:'Lainnya'},
+];
