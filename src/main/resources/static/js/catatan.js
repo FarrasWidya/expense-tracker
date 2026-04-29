@@ -19,8 +19,8 @@ function renderCatatan() {
     (e.note || '').toLowerCase().includes(catSearchQ) || e.category.toLowerCase().includes(catSearchQ)
   );
 
-  const total = list.reduce((s, e) => s + e.amount, 0);
-  document.getElementById('cat-summary-bar').textContent = `${list.length} catatan · Total ${formatRp(total)}`;
+  const expTotal = list.filter(e => e.type !== 'INCOME').reduce((s, e) => s + e.amount, 0);
+  document.getElementById('cat-summary-bar').textContent = `${list.length} catatan · ${formatRp(expTotal)}`;
 
   const cont  = document.getElementById('cat-list');
   const empty = document.getElementById('cat-empty');
@@ -49,7 +49,7 @@ function renderCatatan() {
                   <div class="expense-row-name">${escHtml(e.note || e.category)}</div>
                   <div class="expense-row-cat">${escHtml(e.category)}</div>
                 </div>
-                <div class="expense-row-amount">${formatRp(e.amount)}</div>
+                <div class="expense-row-amount${e.type === 'INCOME' ? ' income-amount' : ''}">${e.type === 'INCOME' ? '+' : ''}${formatRp(e.amount)}</div>
               </div>
             </div>`).join('')}
         </div>`;

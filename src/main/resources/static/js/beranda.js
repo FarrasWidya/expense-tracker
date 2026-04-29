@@ -232,10 +232,24 @@ async function loadBeranda() {
   const expenses  = await r1.json();
   const lastMonth = await r2.json();
 
-  const total     = expenses.reduce((s, e) => s + e.amount, 0);
-  const lastTotal = lastMonth.reduce((s, e) => s + e.amount, 0);
+  const expenseItems = expenses.filter(e => e.type !== 'INCOME');
+  const incomeItems  = expenses.filter(e => e.type === 'INCOME');
+  const total        = expenseItems.reduce((s, e) => s + e.amount, 0);
+  const lastExpense  = lastMonth.filter(e => e.type !== 'INCOME');
+  const lastTotal    = lastExpense.reduce((s, e) => s + e.amount, 0);
+  const incomeTotal  = incomeItems.reduce((s, e) => s + e.amount, 0);
 
   document.getElementById('beranda-total').textContent = formatRp(total);
+
+  const incomeEl = document.getElementById('beranda-income');
+  if (incomeEl) {
+    if (incomeTotal > 0) {
+      incomeEl.textContent = `Pemasukan: ${formatRp(incomeTotal)}`;
+      incomeEl.style.display = 'block';
+    } else {
+      incomeEl.style.display = 'none';
+    }
+  }
 
   // Avg per day
   const avgEl = document.getElementById('beranda-avg');
@@ -268,12 +282,12 @@ async function loadBeranda() {
   if (lastTotal > 0) {
     cmp.textContent = `${Math.round((total / lastTotal) * 100)}% dari bulan lalu`;
   } else {
-    cmp.textContent = '—';
+    cmp.textContent = total > 0 ? '—' : '—';
   }
 
-  const lastMonthTotal = lastMonth.reduce((s, e) => s + e.amount, 0);
-  renderDonutChart(expenses);
-  renderInsightCards(expenses, lastMonthTotal);
+  const lastMonthTotal = lastExpense.reduce((s, e) => s + e.amount, 0);
+  renderDonutChart(expenseItems);
+  renderInsightCards(expenseItems, lastMonthTotal);
   renderStreak(expenses);
   checkWeeklyInsight();
   const todayStr = today();

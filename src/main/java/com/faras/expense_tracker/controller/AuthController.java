@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
@@ -23,7 +25,7 @@ public class AuthController {
     public record RegisterRequest(String email, String password) {}
     public record LoginRequest(String email, String password) {}
     public record TokenResponse(String token) {}
-    public record UserResponse(Long id, String email, String provider, String name, String avatarInitials, boolean hasAvatar) {}
+    public record UserResponse(UUID id, String email, String provider, String name, String avatarInitials, boolean hasAvatar) {}
     public record ConfigResponse(boolean googleEnabled) {}
     public record UpdateProfileRequest(String name) {}
 
@@ -46,10 +48,9 @@ public class AuthController {
     @GetMapping("/me")
     public UserResponse me(Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) {
-            throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.UNAUTHORIZED);
+            throw new org.springframework.web.server.ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
-        Long userId = (Long) auth.getPrincipal();
+        UUID userId = (UUID) auth.getPrincipal();
         User user = authService.getUser(userId);
         String initials = deriveInitials(user.getName() != null ? user.getName() : user.getEmail());
         return new UserResponse(user.getId(), user.getEmail(), user.getProvider().name(),
@@ -58,7 +59,7 @@ public class AuthController {
 
     @PatchMapping("/me")
     public UserResponse updateProfile(@RequestBody UpdateProfileRequest req, Authentication auth) {
-        Long userId = (Long) auth.getPrincipal();
+        UUID userId = (UUID) auth.getPrincipal();
         User user = authService.updateProfile(userId, req.name());
         String initials = deriveInitials(user.getName() != null ? user.getName() : user.getEmail());
         return new UserResponse(user.getId(), user.getEmail(), user.getProvider().name(),
@@ -71,12 +72,12 @@ public class AuthController {
             Authentication auth) throws java.io.IOException {
         if (file.getSize() > 500_000) {
             throw new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.PAYLOAD_TOO_LARGE, "Avatar must be under 500KB");
+                    HttpStatus.PAYLOAD_TOO_LARGE, "Avatar must be under 500KB");
         }
         String contentType = file.getContentType() != null ? file.getContentType() : "image/png";
         String base64 = java.util.Base64.getEncoder().encodeToString(file.getBytes());
         String dataUri = "data:" + contentType + ";base64," + base64;
-        Long userId = (Long) auth.getPrincipal();
+        UUID userId = (UUID) auth.getPrincipal();
         User user = authService.saveAvatar(userId, dataUri);
         String initials = deriveInitials(user.getName() != null ? user.getName() : user.getEmail());
         return new UserResponse(user.getId(), user.getEmail(), user.getProvider().name(),

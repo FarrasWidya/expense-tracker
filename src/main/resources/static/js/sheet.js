@@ -1,9 +1,11 @@
 // QUICK-ADD SHEET
 let sheetAmount = '';
 let sheetCat = CATEGORY_LIST[0].label;
+let sheetType = 'EXPENSE';
 
 function renderCatPills() {
-  document.getElementById('sheet-cats').innerHTML = CATEGORY_LIST.map(c =>
+  const cats = sheetType === 'INCOME' ? INCOME_CATEGORY_LIST : CATEGORY_LIST;
+  document.getElementById('sheet-cats').innerHTML = cats.map(c =>
     `<button class="cat-pill${c.label === sheetCat ? ' selected' : ''}" data-cat="${escHtml(c.label)}"><span class="cat-emoji">${c.emoji}</span><span>${escHtml(getDisplayLabel(c.label))}</span></button>`
   ).join('');
   document.querySelectorAll('.cat-pill').forEach(btn =>
@@ -19,10 +21,15 @@ function updateAmountDisplay() {
 function openSheet() {
   updateBarengToggle();
   sheetAmount = '';
+  sheetType = 'EXPENSE';
   updateAmountDisplay();
   document.getElementById('sheet-note-input').value = '';
   sheetCat = CATEGORY_LIST[0].label;
   renderCatPills();
+  document.querySelectorAll('.sheet-type-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.type === 'EXPENSE');
+  });
+  document.getElementById('sheet-amount-text').style.color = '';
   document.getElementById('sheet-overlay').style.display = 'block';
   document.getElementById('quick-add-sheet').classList.add('open');
 }
@@ -64,6 +71,7 @@ document.getElementById('sheet-simpan').addEventListener('click', async () => {
         category: sheetCat,
         note: document.getElementById('sheet-note-input').value.trim(),
         date: today(),
+        type: sheetType,
       }),
     });
     if (!res.ok) throw new Error();
@@ -72,4 +80,17 @@ document.getElementById('sheet-simpan').addEventListener('click', async () => {
     if (isBareng) loadRumahFeed(); else loadBeranda();
   } catch (_) { alert('Gagal menyimpan. Coba lagi.'); }
   finally { btn.disabled = false; }
+});
+
+document.querySelectorAll('.sheet-type-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    sheetType = btn.dataset.type;
+    document.querySelectorAll('.sheet-type-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.type === sheetType)
+    );
+    const cats = sheetType === 'INCOME' ? INCOME_CATEGORY_LIST : CATEGORY_LIST;
+    sheetCat = cats[0].label;
+    document.getElementById('sheet-amount-text').style.color = sheetType === 'INCOME' ? 'var(--accent)' : '';
+    renderCatPills();
+  });
 });

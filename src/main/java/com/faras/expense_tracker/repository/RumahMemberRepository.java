@@ -8,10 +8,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface RumahMemberRepository extends JpaRepository<RumahMember, UUID> {
-    Optional<RumahMember> findByUserId(Long userId);
+    Optional<RumahMember> findByUserId(UUID userId);
     List<RumahMember> findByRumah(Rumah rumah);
-    boolean existsByRumahAndUserId(Rumah rumah, Long userId);
+    boolean existsByRumahAndUserId(Rumah rumah, UUID userId);
     int countByRumah(Rumah rumah);
-    void deleteByRumahAndUserId(Rumah rumah, Long userId);
+    void deleteByRumahAndUserId(Rumah rumah, UUID userId);
     void deleteByRumah(Rumah rumah);
 }

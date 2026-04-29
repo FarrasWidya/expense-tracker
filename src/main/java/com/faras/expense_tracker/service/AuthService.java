@@ -8,6 +8,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.UUID;
+
 @Service
 public class AuthService {
 
@@ -42,13 +44,13 @@ public class AuthService {
         return jwtUtil.generateToken(user.getId());
     }
 
-    public User getUser(Long userId) {
+    public User getUser(UUID userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
     @org.springframework.transaction.annotation.Transactional
-    public User updateProfile(Long userId, String name) {
+    public User updateProfile(UUID userId, String name) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         user.setName(name != null ? name.trim() : null);
@@ -56,7 +58,7 @@ public class AuthService {
     }
 
     @org.springframework.transaction.annotation.Transactional
-    public User saveAvatar(Long userId, String base64DataUri) {
+    public User saveAvatar(UUID userId, String base64DataUri) {
         if (base64DataUri != null && base64DataUri.length() > 700_000) {
             throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "Avatar must be under 500KB");
         }

@@ -50,7 +50,7 @@ class ExpenseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").isNumber())
+                .andExpect(jsonPath("$.id").isString())
                 .andExpect(jsonPath("$.amount").value(50000.0))
                 .andExpect(jsonPath("$.category").value("Food"))
                 .andExpect(jsonPath("$.note").value("lunch"))
@@ -101,18 +101,18 @@ class ExpenseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andReturn().getResponse().getContentAsString();
-        Long id = objectMapper.readTree(created).get("id").asLong();
+        String id = objectMapper.readTree(created).get("id").asText();
 
         mockMvc.perform(authed(delete("/expenses/" + id)))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(authed(get("/expenses")))
-                .andExpect(jsonPath("$[?(@.id == " + id + ")]").isEmpty());
+                .andExpect(jsonPath("$[?(@.id == '" + id + "')]").isEmpty());
     }
 
     @Test
     void deleteExpense_notFound_returns404() throws Exception {
-        mockMvc.perform(authed(delete("/expenses/99999")))
+        mockMvc.perform(authed(delete("/expenses/" + UUID.randomUUID())))
                 .andExpect(status().isNotFound());
     }
 
@@ -123,7 +123,7 @@ class ExpenseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andReturn().getResponse().getContentAsString();
-        Long id = objectMapper.readTree(created).get("id").asLong();
+        String id = objectMapper.readTree(created).get("id").asText();
 
         String email2 = UUID.randomUUID() + "@test.com";
         String resp2 = mockMvc.perform(post("/auth/register")
@@ -143,7 +143,7 @@ class ExpenseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andReturn().getResponse().getContentAsString();
-        Long id = objectMapper.readTree(created).get("id").asLong();
+        String id = objectMapper.readTree(created).get("id").asText();
 
         String update = "{\"amount\":25000,\"category\":\"Bills\",\"note\":\"Internet\",\"date\":\"2026-04-01\"}";
         mockMvc.perform(authed(put("/expenses/" + id))
@@ -164,7 +164,7 @@ class ExpenseControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andReturn().getResponse().getContentAsString();
-        Long id = objectMapper.readTree(created).get("id").asLong();
+        String id = objectMapper.readTree(created).get("id").asText();
 
         String email2 = UUID.randomUUID() + "@test.com";
         String resp2 = mockMvc.perform(post("/auth/register")
@@ -221,11 +221,11 @@ class ExpenseControllerTest {
 
     @Test
     void batchDelete_removesOnlyRequestedIds() throws Exception {
-        Long id1 = createExpense("Food", 10000.0);
-        Long id2 = createExpense("Transport", 20000.0);
-        Long id3 = createExpense("Food", 30000.0);
+        String id1 = createExpense("Food", 10000.0);
+        String id2 = createExpense("Transport", 20000.0);
+        String id3 = createExpense("Food", 30000.0);
 
-        String body = "{\"ids\":[" + id1 + "," + id2 + "]}";
+        String body = "{\"ids\":[\"" + id1 + "\",\"" + id2 + "\"]}";
         mockMvc.perform(authed(delete("/expenses/batch"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -239,11 +239,11 @@ class ExpenseControllerTest {
 
     @Test
     void batchUpdateCategory_changesCategoryForRequestedIds() throws Exception {
-        Long id1 = createExpense("Food", 10000.0);
-        Long id2 = createExpense("Food", 20000.0);
-        Long id3 = createExpense("Food", 30000.0);
+        String id1 = createExpense("Food", 10000.0);
+        String id2 = createExpense("Food", 20000.0);
+        String id3 = createExpense("Food", 30000.0);
 
-        String body = "{\"ids\":[" + id1 + "," + id2 + "],\"category\":\"Transport\"}";
+        String body = "{\"ids\":[\"" + id1 + "\",\"" + id2 + "\"],\"category\":\"Transport\"}";
         mockMvc.perform(authed(patch("/expenses/batch/category"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
@@ -252,7 +252,7 @@ class ExpenseControllerTest {
                 .andExpect(jsonPath("$[*].category", everyItem(is("Transport"))));
 
         mockMvc.perform(authed(get("/expenses")))
-                .andExpect(jsonPath("$[?(@.id==" + id3 + ")].category", hasItem("Food")));
+                .andExpect(jsonPath("$[?(@.id=='" + id3 + "')].category", hasItem("Food")));
     }
 
     @Test
@@ -283,12 +283,12 @@ class ExpenseControllerTest {
                         containsString("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")));
     }
 
-    private Long createExpense(String category, double amount) throws Exception {
+    private String createExpense(String category, double amount) throws Exception {
         String body = String.format("{\"amount\":%.1f,\"category\":\"%s\",\"note\":\"test\",\"date\":\"2026-04-27\"}", amount, category);
         String resp = mockMvc.perform(authed(post("/expenses"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andReturn().getResponse().getContentAsString();
-        return objectMapper.readTree(resp).get("id").asLong();
+        return objectMapper.readTree(resp).get("id").asText();
     }
 }

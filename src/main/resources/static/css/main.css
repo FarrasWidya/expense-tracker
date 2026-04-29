@@ -363,3 +363,30 @@
 .rumah-chevron { font-size: 14px; color: var(--text-2); transition: transform .2s; }
 .rumah-chevron.open { transform: rotate(180deg); }
 #rumah-section-body { overflow: hidden; }
+
+.sheet-type-toggle {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 12px;
+}
+.sheet-type-btn {
+  flex: 1;
+  padding: 8px 0;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.sheet-type-btn.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+.income-amount {
+  color: #00897B;
+  font-weight: 600;
+}
