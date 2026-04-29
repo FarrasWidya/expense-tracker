@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/expenses")
@@ -23,18 +24,18 @@ public class ExpenseController {
         this.expenseService = expenseService;
     }
 
-    public record BatchDeleteRequest(List<Long> ids) {}
-    public record BatchCategoryRequest(List<Long> ids, String category) {}
+    public record BatchDeleteRequest(List<UUID> ids) {}
+    public record BatchCategoryRequest(List<UUID> ids, String category) {}
 
-    private Long userId(Authentication auth) {
-        return (Long) auth.getPrincipal();
+    private UUID userId(Authentication auth) {
+        return (UUID) auth.getPrincipal();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Expense addExpense(@RequestBody Expense expense, Authentication auth) {
         return expenseService.add(userId(auth), expense.getAmount(),
-                expense.getCategory(), expense.getNote(), expense.getDate());
+                expense.getCategory(), expense.getNote(), expense.getDate(), expense.getType());
     }
 
     @GetMapping
@@ -46,14 +47,19 @@ public class ExpenseController {
         return expenseService.getAll(userId(auth), category, startDate, endDate);
     }
 
+    @GetMapping("/summary")
+    public ExpenseService.SummaryResponse getSummary(@RequestParam String month, Authentication auth) {
+        return expenseService.getSummary(userId(auth), month);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteExpense(@PathVariable Long id, Authentication auth) {
+    public void deleteExpense(@PathVariable UUID id, Authentication auth) {
         expenseService.delete(userId(auth), id);
     }
 
     @PutMapping("/{id}")
-    public Expense updateExpense(@PathVariable Long id, @RequestBody Expense expense, Authentication auth) {
+    public Expense updateExpense(@PathVariable UUID id, @RequestBody Expense expense, Authentication auth) {
         return expenseService.update(userId(auth), id, expense.getAmount(),
                 expense.getCategory(), expense.getNote(), expense.getDate());
     }
@@ -75,7 +81,7 @@ public class ExpenseController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             Authentication auth) {
-        Long uid = userId(auth);
+        UUID uid = userId(auth);
         return switch (format.toLowerCase()) {
             case "json" -> ResponseEntity.ok()
                     .contentType(MediaType.APPLICATION_JSON)
