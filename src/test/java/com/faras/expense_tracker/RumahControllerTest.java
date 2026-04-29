@@ -112,13 +112,11 @@ class RumahControllerTest {
         String rumahJson = createRumah(token1);
         String inviteToken = objectMapper.readTree(rumahJson).get("inviteToken").asText();
 
-        // admin = 1 member; join 5 more to reach cap of 6
         for (int i = 0; i < 5; i++) {
             mockMvc.perform(authed(post("/rumah/join/" + inviteToken), registerAndGetToken()))
                     .andExpect(status().isOk());
         }
 
-        // 7th person should be rejected
         mockMvc.perform(authed(post("/rumah/join/" + inviteToken), registerAndGetToken()))
                 .andExpect(status().isConflict());
     }
@@ -274,11 +272,11 @@ class RumahControllerTest {
 
         String joinJson = mockMvc.perform(authed(post("/rumah/join/" + inviteToken), token2))
                 .andReturn().getResponse().getContentAsString();
-        long adminId = objectMapper.readTree(rumahJson).get("adminId").asLong();
-        long user2Id = -1;
+        String adminId = objectMapper.readTree(rumahJson).get("adminId").asText();
+        String user2Id = null;
         for (var m : objectMapper.readTree(joinJson).get("members")) {
-            long uid = m.get("userId").asLong();
-            if (uid != adminId) { user2Id = uid; break; }
+            String uid = m.get("userId").asText();
+            if (!uid.equals(adminId)) { user2Id = uid; break; }
         }
 
         mockMvc.perform(authed(delete("/rumah/" + rumahId + "/members/" + user2Id), token1))
@@ -294,7 +292,7 @@ class RumahControllerTest {
         String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
         String inviteToken = objectMapper.readTree(rumahJson).get("inviteToken").asText();
         mockMvc.perform(authed(post("/rumah/join/" + inviteToken), token2)).andExpect(status().isOk());
-        long adminId = objectMapper.readTree(rumahJson).get("adminId").asLong();
+        String adminId = objectMapper.readTree(rumahJson).get("adminId").asText();
 
         mockMvc.perform(authed(delete("/rumah/" + rumahId + "/members/" + adminId), token2))
                 .andExpect(status().isForbidden());
@@ -304,7 +302,7 @@ class RumahControllerTest {
     void kickMember_adminKickSelf_returns403() throws Exception {
         String rumahJson = createRumah(token1);
         String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
-        long adminId = objectMapper.readTree(rumahJson).get("adminId").asLong();
+        String adminId = objectMapper.readTree(rumahJson).get("adminId").asText();
 
         mockMvc.perform(authed(delete("/rumah/" + rumahId + "/members/" + adminId), token1))
                 .andExpect(status().isForbidden());
@@ -315,7 +313,7 @@ class RumahControllerTest {
         String rumahJson = createRumah(token1);
         String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
 
-        mockMvc.perform(authed(delete("/rumah/" + rumahId + "/members/99999"), token1))
+        mockMvc.perform(authed(delete("/rumah/" + rumahId + "/members/" + UUID.randomUUID()), token1))
                 .andExpect(status().isNotFound());
     }
 
@@ -327,11 +325,11 @@ class RumahControllerTest {
 
         String joinJson = mockMvc.perform(authed(post("/rumah/join/" + inviteToken), token2))
                 .andReturn().getResponse().getContentAsString();
-        long adminId = objectMapper.readTree(rumahJson).get("adminId").asLong();
-        long user2Id = -1;
+        String adminId = objectMapper.readTree(rumahJson).get("adminId").asText();
+        String user2Id = null;
         for (var m : objectMapper.readTree(joinJson).get("members")) {
-            long uid = m.get("userId").asLong();
-            if (uid != adminId) { user2Id = uid; break; }
+            String uid = m.get("userId").asText();
+            if (!uid.equals(adminId)) { user2Id = uid; break; }
         }
 
         mockMvc.perform(authed(put("/rumah/" + rumahId + "/admin/" + user2Id), token1))
@@ -345,7 +343,7 @@ class RumahControllerTest {
         String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
         String inviteToken = objectMapper.readTree(rumahJson).get("inviteToken").asText();
         mockMvc.perform(authed(post("/rumah/join/" + inviteToken), token2)).andExpect(status().isOk());
-        long adminId = objectMapper.readTree(rumahJson).get("adminId").asLong();
+        String adminId = objectMapper.readTree(rumahJson).get("adminId").asText();
 
         mockMvc.perform(authed(put("/rumah/" + rumahId + "/admin/" + adminId), token2))
                 .andExpect(status().isForbidden());
@@ -356,7 +354,7 @@ class RumahControllerTest {
         String rumahJson = createRumah(token1);
         String rumahId = objectMapper.readTree(rumahJson).get("id").asText();
 
-        mockMvc.perform(authed(put("/rumah/" + rumahId + "/admin/99999"), token1))
+        mockMvc.perform(authed(put("/rumah/" + rumahId + "/admin/" + UUID.randomUUID()), token1))
                 .andExpect(status().isNotFound());
     }
 
@@ -369,7 +367,6 @@ class RumahControllerTest {
         String inviteToken = objectMapper.readTree(rumahJson).get("inviteToken").asText();
         mockMvc.perform(authed(post("/rumah/join/" + inviteToken), token2)).andExpect(status().isOk());
 
-        // token1: 3 × Rp100k = Rp300k (75%), token2: 1 × Rp100k (25%)
         String expBody = objectMapper.writeValueAsString(
                 Map.of("amount", 100000, "category", "Makan & Minum", "note", "test"));
         for (int i = 0; i < 3; i++) {
