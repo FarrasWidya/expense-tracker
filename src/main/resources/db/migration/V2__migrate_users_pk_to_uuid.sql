@@ -7,6 +7,7 @@ UPDATE users SET new_id = gen_random_uuid() WHERE new_id IS NULL;
 ALTER TABLE users ALTER COLUMN new_id SET NOT NULL;
 
 -- Step 2: Add UUID FK shadow columns on all child tables and backfill via join
+DELETE FROM expense WHERE user_id IS NULL;
 ALTER TABLE expense ADD COLUMN user_uuid UUID;
 UPDATE expense e SET user_uuid = u.new_id FROM users u WHERE e.user_id = u.id;
 ALTER TABLE expense ALTER COLUMN user_uuid SET NOT NULL;
